@@ -38,6 +38,15 @@ public class ExceptionMiddleware
                 StatusCode = context.Response.StatusCode
             });
         }
+        catch (AddressElementNotFound ex)
+        {
+            context.Response.StatusCode = StatusCodes.Status404NotFound;
+            await context.Response.WriteAsJsonAsync(new Error
+            {
+                Message = ex.Message,
+                StatusCode = context.Response.StatusCode
+            });
+        }
         catch (NullTokenException ex)
         {
             context.Response.StatusCode = StatusCodes.Status400BadRequest;
