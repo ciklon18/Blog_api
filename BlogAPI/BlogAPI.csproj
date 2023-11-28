@@ -30,4 +30,8 @@
       <Folder Include="DTOs\" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Compile Remove="Migrations\ApplicationDbContextModelSnapshot.cs" />
+    </ItemGroup>
+
 </Project>
