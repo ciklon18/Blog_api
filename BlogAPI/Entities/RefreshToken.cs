@@ -18,10 +18,13 @@ public class RefreshToken
     
     [Column("expires")]
     public DateTime Expires { get; set; }
+    
     [Column("is_expired")]
     public bool IsExpired => DateTime.UtcNow >= Expires;
+    
     [Column("revoked")]
     public bool Revoked { get; set; }
+    
     [Column("email")]
     public required string Email { get; set; }
     
