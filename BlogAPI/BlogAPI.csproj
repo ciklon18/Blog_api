@@ -28,24 +28,8 @@
 
     <ItemGroup>
       <Compile Remove="Migrations\ApplicationDbContextModelSnapshot.cs" />
-<<<<<<< HEAD
-=======
       <Folder Include="DTOs\" />
       <Folder Include="Migrations\" />
     </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="DTOs\" />
->>>>>>> dev
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="DTOs\" />
-      <Compile Remove="Migrations\ApplicationDbContextModelSnapshot.cs" />
-      <Folder Include="DTOs\" />
-      <Folder Include="Migrations\" />
-      <Compile Remove="Migrations\ApplicationDbContextModelSnapshot.cs" />
-      <Folder Include="DTOs\" />
-    </ItemGroup>
-
+    
 </Project>
