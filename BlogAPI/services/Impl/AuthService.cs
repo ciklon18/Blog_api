@@ -99,7 +99,6 @@ public class AuthService : IAuthService
             FullName = user.FullName,
             Phone = user.Phone,
             Password = passwordHash,
-            Role = user.Role,
             BirthDate = user.BirthDate.ToUniversalTime(),
             Email = user.Email,
             Gender = user.Gender,

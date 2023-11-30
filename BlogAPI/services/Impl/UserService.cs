@@ -108,7 +108,6 @@ public class UserService : IUserService
             Phone = userEditRequest.PhoneNumber,
             CreatedAt = user.CreatedAt,
             Password = user.Password,
-            Role = user.Role
         };
     }
 
