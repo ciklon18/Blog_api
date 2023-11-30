@@ -11,6 +11,8 @@ public class ApplicationDbContext : DbContext
     public DbSet<HierarchyAddress> HierarchyAddresses { get; set; } = null!;
     public DbSet<HousesAddress> HousesAddresses { get; set; } = null!;
     
+    public DbSet<Tag> Tags { get; set; } = null!;
+    
     
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
     {
