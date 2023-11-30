@@ -10,7 +10,7 @@ namespace BlogAPI.Entities;
 [Table("users")]
 public class User
 {
-    [Column("id")] public Guid Id { get; set; }
+    [Key] [Column("id")] public Guid Id { get; set; }
 
     [Column("full_name")]
     [RegularExpression(pattern: EntityConstants.FullNameRegex,
@@ -38,9 +38,7 @@ public class User
     [Column("password")]
     [StringLength(100, MinimumLength = 6, ErrorMessage = EntityConstants.ShortPasswordError)]
     public string? Password { get; set; }
-
-    [Column("role")] public string? Role { get; set; }
-
+    
     [Required]
     [Column("created_at")]
     [JsonConverter(typeof(JsonDateTimeConverter))]
