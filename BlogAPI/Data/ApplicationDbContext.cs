@@ -13,6 +13,8 @@ public class ApplicationDbContext : DbContext
     public DbSet<Community> Communities { get; set; } = null!;
     public DbSet<UserCommunityRole> UserCommunityRoles { get; set; } = null!;
     
+    public DbSet<Tag> Tags { get; set; } = null!;
+    
     
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
     {
