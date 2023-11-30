@@ -38,7 +38,34 @@ public class ExceptionMiddleware
                 StatusCode = context.Response.StatusCode
             });
         }
+        catch (CommunityUserRoleNotFoundException ex)
+        {
+            context.Response.StatusCode = StatusCodes.Status404NotFound;
+            await context.Response.WriteAsJsonAsync(new Error
+            {
+                Message = ex.Message,
+                StatusCode = context.Response.StatusCode
+            });
+        }
+        catch (UserCommunityRoleAlreadyExistsException ex)
+        {
+            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+            await context.Response.WriteAsJsonAsync(new Error
+            {
+                StatusCode = context.Response.StatusCode,
+                Message = ex.Message,
+            });
+        }
         catch (AddressElementNotFound ex)
+        {
+            context.Response.StatusCode = StatusCodes.Status404NotFound;
+            await context.Response.WriteAsJsonAsync(new Error
+            {
+                Message = ex.Message,
+                StatusCode = context.Response.StatusCode
+            });
+        }
+        catch (CommunityNotFoundException ex)
         {
             context.Response.StatusCode = StatusCodes.Status404NotFound;
             await context.Response.WriteAsJsonAsync(new Error

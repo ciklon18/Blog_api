@@ -7,7 +7,7 @@ public static class EntityConstants
 
     public const string ShortPasswordError = "Too short password. Password must be 6 or more  characters.";
 
-    public const string FullNameRegex = @"^[a-zA-Z\s]*$";
+    public const string FullNameRegex = @"^[a-zA-ZА-Яа-я\s]*$";
     public const string WrongSymbolInFullNameError = "Name can only contain letters and spaces.";
     public const string IncorrectEmailError = "Invalid email format. It must be user@example.com";
     public const string DateTimeFormat = "yyyy-MM-ddTHH:mm:ss.fffZ";
