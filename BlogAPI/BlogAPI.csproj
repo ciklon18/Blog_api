@@ -27,11 +27,11 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="DTOs\" />
+      <Compile Remove="Migrations\ApplicationDbContextModelSnapshot.cs" />
     </ItemGroup>
 
     <ItemGroup>
-      <Compile Remove="Migrations\ApplicationDbContextModelSnapshot.cs" />
+      <Folder Include="DTOs\" />
     </ItemGroup>
 
 </Project>
