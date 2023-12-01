@@ -33,7 +33,7 @@ public class User
 
     [Column("gender")] 
     [EnumDataType(typeof(Gender))]
-    public string? Gender { get; set; }
+    public Gender Gender { get; set; }
 
     [Column("password")]
     [StringLength(100, MinimumLength = 6, ErrorMessage = EntityConstants.ShortPasswordError)]

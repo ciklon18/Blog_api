@@ -92,6 +92,15 @@ public class ExceptionMiddleware
                 StatusCode = context.Response.StatusCode
             });
         }
+        catch (IncorrectGenderException ex)
+        {
+            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+            await context.Response.WriteAsJsonAsync(new Error
+            {
+                Message = ex.Message,
+                StatusCode = context.Response.StatusCode
+            });
+        }
         catch (BadImageLinkException ex)
         {
             context.Response.StatusCode = StatusCodes.Status400BadRequest;

@@ -1,5 +1,4 @@
-﻿using System.Security.Authentication;
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using BlogAPI.Configurations;
 using BlogAPI.Data;
 using BlogAPI.Entities;
@@ -34,8 +33,6 @@ public class UserService : IUserService
         var user = await GetUserByEmailAsync(userEmail);
         return EntityUserToUserDto(user);
     }
-
-
 
 
     public async Task<IActionResult> UpdateUserProfileAsync(UserEditRequest userEditRequest)
@@ -77,6 +74,7 @@ public class UserService : IUserService
         if (user == null) throw new UserNotFoundException("User not found");
         return user;
     }
+
     private async Task CheckIsRefreshTokenValid(string email)
     {
         var isEmailUsed = await _db.RefreshTokens.AnyAsync(u => u.Email == email);
@@ -91,7 +89,7 @@ public class UserService : IUserService
             CreateTime = user.CreatedAt.ToString(EntityConstants.DateTimeFormat),
             FullName = user.FullName,
             BirthDate = user.BirthDate.ToString(EntityConstants.DateTimeFormat),
-            Gender = user.Gender ?? Gender.Male.ToString(),
+            Gender = user.Gender.ToString(),
             Email = user.Email,
             PhoneNumber = user.Phone ?? string.Empty
         };
@@ -104,10 +102,20 @@ public class UserService : IUserService
             Email = userEditRequest.Email,
             FullName = userEditRequest.FullName,
             BirthDate = DateTime.Parse(userEditRequest.BirthDate).ToUniversalTime(),
-            Gender = userEditRequest.Gender,
+            Gender = ConvertStringToGender(userEditRequest.Gender),
             Phone = userEditRequest.PhoneNumber,
             CreatedAt = user.CreatedAt,
             Password = user.Password,
+        };
+    }
+
+    private static Gender ConvertStringToGender(string gender)
+    {
+        return gender switch
+        {
+            "Male" => Gender.Male,
+            "Female" => Gender.Female,
+            _ => throw new IncorrectGenderException("Gender is incorrect")
         };
     }
 
