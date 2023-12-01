@@ -60,6 +60,7 @@ services.AddScoped<IAuthService, AuthService>();
 services.AddScoped<IUserService, UserService>();
 services.AddScoped<IAddressService, AddressService>();
 services.AddScoped<ITagService, TagService>();
+services.AddScoped<ICommunityService, CommunityService>();
 
 
 services.AddAuthentication(options =>

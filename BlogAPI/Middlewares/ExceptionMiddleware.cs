@@ -29,6 +29,15 @@ public class ExceptionMiddleware
                 StatusCode = context.Response.StatusCode
             });
         }
+        catch (ForbiddenAccessToClosedCommunityException ex)
+        {
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            await context.Response.WriteAsJsonAsync(new Error
+            {
+                Message = ex.Message,
+                StatusCode = context.Response.StatusCode
+            });
+        }
         catch (InvalidTokenException ex)
         {
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
@@ -36,6 +45,24 @@ public class ExceptionMiddleware
             {
                 Message = ex.Message,
                 StatusCode = context.Response.StatusCode
+            });
+        }
+        catch (CommunityUserRoleNotFoundException ex)
+        {
+            context.Response.StatusCode = StatusCodes.Status404NotFound;
+            await context.Response.WriteAsJsonAsync(new Error
+            {
+                Message = ex.Message,
+                StatusCode = context.Response.StatusCode
+            });
+        }
+        catch (UserCommunityRoleAlreadyExistsException ex)
+        {
+            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+            await context.Response.WriteAsJsonAsync(new Error
+            {
+                StatusCode = context.Response.StatusCode,
+                Message = ex.Message,
             });
         }
         catch (AddressElementNotFound ex)
@@ -47,6 +74,43 @@ public class ExceptionMiddleware
                 StatusCode = context.Response.StatusCode
             });
         }
+        catch (CommunityNotFoundException ex)
+        {
+            context.Response.StatusCode = StatusCodes.Status404NotFound;
+            await context.Response.WriteAsJsonAsync(new Error
+            {
+                Message = ex.Message,
+                StatusCode = context.Response.StatusCode
+            });
+        }
+        catch (InvalidPaginationException ex)
+        {
+            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+            await context.Response.WriteAsJsonAsync(new Error
+            {
+                Message = ex.Message,
+                StatusCode = context.Response.StatusCode
+            });
+        }
+        catch (BadImageLinkException ex)
+        {
+            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+            await context.Response.WriteAsJsonAsync(new Error
+            {
+                Message = ex.Message,
+                StatusCode = context.Response.StatusCode
+            });
+        }
+        catch (TagNotFoundException ex)
+        {
+            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+            await context.Response.WriteAsJsonAsync(new Error
+            {
+                Message = ex.Message,
+                StatusCode = context.Response.StatusCode
+            });
+        }
+
         catch (NullTokenException ex)
         {
             context.Response.StatusCode = StatusCodes.Status400BadRequest;
@@ -74,6 +138,15 @@ public class ExceptionMiddleware
                 StatusCode = context.Response.StatusCode
             });
         }
+        catch (UserCommunityRoleNotFoundException ex)
+        {
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            await context.Response.WriteAsJsonAsync(new Error
+            {
+                Message = ex.Message,
+                StatusCode = context.Response.StatusCode
+            });
+        }
         catch (IncorrectPhoneException ex)
         {
             context.Response.StatusCode = StatusCodes.Status400BadRequest;
@@ -92,6 +165,7 @@ public class ExceptionMiddleware
                 StatusCode =  context.Response.StatusCode
             });
         }
+        
         catch (Exception ex)
         {
             context.Response.StatusCode = StatusCodes.Status500InternalServerError;
@@ -101,6 +175,7 @@ public class ExceptionMiddleware
                 StatusCode =  context.Response.StatusCode
             });
         }
+        
     } 
     
 }   
