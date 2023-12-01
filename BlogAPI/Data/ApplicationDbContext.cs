@@ -16,6 +16,8 @@ public class ApplicationDbContext : DbContext
     
     public DbSet<Tag> Tags { get; set; } = null!;
     
+    public DbSet<PostTag> PostTags { get; set; } = null!;
+    
     
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
     {
@@ -25,6 +27,14 @@ public class ApplicationDbContext : DbContext
     {
         modelBuilder.Entity<UserCommunityRole>()
             .HasKey(ucr => new { ucr.UserId, ucr.CommunityId });
+        modelBuilder.Entity<PostTag>()
+            .HasKey(pt => new { pt.PostId, pt.TagId });
+
+        modelBuilder.Entity<PostTag>()
+            .HasOne(pt => pt.Post)
+            .WithMany(p => p.PostTags)
+            .HasForeignKey(pt => pt.PostId);
+        
         base.OnModelCreating(modelBuilder);
 
     }
