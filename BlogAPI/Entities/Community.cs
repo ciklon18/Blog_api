@@ -30,4 +30,6 @@ public class Community
     
     [Column("administrators")]
     public IEnumerable<User> Administrators { get; set; } = new List<User>();
+    
+    public List<UserCommunityRole> UserCommunityRoles { get; set; } = new();
 }

@@ -11,4 +11,6 @@ public static class EntityConstants
     public const string WrongSymbolInFullNameError = "Name can only contain letters and spaces.";
     public const string IncorrectEmailError = "Invalid email format. It must be user@example.com";
     public const string DateTimeFormat = "yyyy-MM-ddTHH:mm:ss.fffZ";
+    
+    public const string ImageUrlRegex = @"^(https?|ftp|file)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]$";
 }

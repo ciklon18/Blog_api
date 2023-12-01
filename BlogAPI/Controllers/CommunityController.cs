@@ -1,4 +1,6 @@
-﻿using BlogAPI.Enums;
+﻿using BlogAPI.Entities;
+using BlogAPI.Enums;
+using BlogAPI.Models.Request;
 using BlogAPI.Models.Response;
 using BlogAPI.services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -17,9 +19,9 @@ public class CommunityController
     }
 
     [HttpGet()]
-    public List<CommunityResponse> GetCommunityList()
+    public async Task<List<CommunityResponse>> GetCommunityList()
     {
-        return _communityService.GetCommunityList();
+        return await _communityService.GetCommunityList();
     }
 
     [HttpGet("my"), Authorize]
@@ -35,21 +37,20 @@ public class CommunityController
     }
 
     [HttpGet("{id}/post"), Authorize]
-    public IActionResult GetCommunityPosts( //TODO change return type 
+    public async Task<PostPagedListResponse> GetCommunityPosts( 
         [FromRoute] Guid id,
         [FromQuery(Name = "tags")] List<Guid> tagIds,
-        // change available sorting options to PostSorting enum
         [FromQuery] PostSorting sort,
-        [FromQuery] int page,
-        [FromQuery] int pageSize)
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 5)
     {
-        return new OkObjectResult("Hello World");
+        return await _communityService.GetCommunityPosts(id, tagIds, sort, page, pageSize);
     }
 
     [HttpPost("{id}/post"), Authorize]
-    public IActionResult PostCommunityPost([FromRoute] Guid id) //TODO change return type 
+    public Task<IActionResult> PostCommunityPost([FromRoute] Guid id, [FromBody] PostRequest postRequest)
     {
-        return new OkObjectResult("Hello World");
+        return _communityService.PostCommunityPost(id, postRequest);
     }
 
     [HttpGet("{id}/role"), Authorize]
