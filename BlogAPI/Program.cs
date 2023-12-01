@@ -61,6 +61,7 @@ services.AddScoped<IUserService, UserService>();
 services.AddScoped<IAddressService, AddressService>();
 services.AddScoped<ITagService, TagService>();
 services.AddScoped<ICommunityService, CommunityService>();
+services.AddScoped<IAuthorService, AuthorService>();
 
 
 services.AddAuthentication(options =>
