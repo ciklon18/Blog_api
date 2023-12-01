@@ -67,14 +67,14 @@ public class UserService : IUserService
     private string GetUserEmail()
     {
         var userEmail = _httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.Email);
-        if (userEmail == null) throw new UserNotFoundException("GetUserEmail: User not found");
+        if (userEmail == null) throw new UserNotFoundException("User not found");
         return userEmail;
     }
 
     private async Task<User> GetUserByEmailAsync(string email)
     {
         var user = await _db.Users.SingleOrDefaultAsync(u => u.Email == email);
-        if (user == null) throw new UserNotFoundException("GetUserByEmailAsync: User not found");
+        if (user == null) throw new UserNotFoundException("User not found");
         return user;
     }
     private async Task CheckIsRefreshTokenValid(string email)
@@ -108,7 +108,6 @@ public class UserService : IUserService
             Phone = userEditRequest.PhoneNumber,
             CreatedAt = user.CreatedAt,
             Password = user.Password,
-            Role = user.Role
         };
     }
 
