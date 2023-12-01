@@ -79,7 +79,7 @@ public class JwtService : IJwtService
         CheckTokenNotExpired(refreshToken);
     }
     
-    public string GetEmailFromRefreshTokenAsync(string? token)
+    public string GetEmailFromRefreshToken(string? token)
     {
         CheckTokenNotNull(token);
         var refreshToken =  _db.RefreshTokens.FirstOrDefault(t => t.Token == token);

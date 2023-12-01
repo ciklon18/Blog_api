@@ -9,6 +9,6 @@ public interface IJwtService
     public Task SaveRefreshTokenAsync(string refreshToken, string email);
     public Task RemoveRefreshTokenAsync(string refreshToken);
     public Task ValidateRefreshTokenAsync(string? token);
-    public string GetEmailFromRefreshTokenAsync(string? token);
+    public string GetEmailFromRefreshToken(string? token);
     public Task<string?> GetRefreshTokenByEmailAsync(string? email);
 }
