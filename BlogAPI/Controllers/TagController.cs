@@ -6,7 +6,7 @@ namespace BlogAPI.controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class TagController
+public class TagController : ControllerBase
 {
     private readonly ITagService _tagService;
     public TagController(ITagService tagService)

@@ -10,7 +10,7 @@ namespace BlogAPI.controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class CommunityController
+public class CommunityController : ControllerBase
 {
     private readonly ICommunityService _communityService;
     public CommunityController(ICommunityService communityService)

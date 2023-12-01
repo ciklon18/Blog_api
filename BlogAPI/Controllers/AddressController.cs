@@ -6,7 +6,7 @@ namespace BlogAPI.controllers;
 
 [ApiController]
 [Route("api/address")]
-public class AddressController
+public class AddressController : ControllerBase
 {
     private readonly IAddressService _addressService;
     
