@@ -28,7 +28,7 @@ public class AuthService : IAuthService
     {
         await IsUserUnique(user.Email);
         var newUser = CreateHashUser(user);
-        _db.Users.Add(newUser);
+        await _db.Users.AddAsync(newUser);
         await _db.SaveChangesAsync();
         return new RegistrationResponse { Email = newUser.Email, FullName = newUser.FullName };
     }
@@ -40,6 +40,7 @@ public class AuthService : IAuthService
         CheckIsValidPassword(loginRequest.Password, user.Password);
         var existingRefreshToken = await _jwtService.GetRefreshTokenByEmailAsync(loginRequest.Email);
         var accessToken = _jwtService.GenerateAccessToken(user);
+        
         var refreshToken = existingRefreshToken ?? _jwtService.GenerateRefreshToken(user);
         if (refreshToken != existingRefreshToken) await _jwtService.SaveRefreshTokenAsync(refreshToken, loginRequest.Email);
         
@@ -59,9 +60,9 @@ public class AuthService : IAuthService
 
     public async Task<RefreshResponse> Refresh(RefreshRequest refreshRequest)
     {
-        var userEmail = _jwtService.GetEmailFromRefreshTokenAsync(refreshRequest.RefreshToken);
+        var userEmail = _jwtService.GetEmailFromRefreshToken(refreshRequest.RefreshToken);
         await _jwtService.ValidateRefreshTokenAsync(refreshRequest.RefreshToken);
-        var user = await GetUserByEmailAsync(userEmail);
+        var user = GetUserByEmail(userEmail);
         var accessToken = _jwtService.GenerateAccessToken(user);
         return new RefreshResponse { AccessToken = accessToken };
     }
@@ -85,6 +86,13 @@ public class AuthService : IAuthService
 
     private async Task<User> GetUserByEmailAsync(string loginRequestEmail)
     {
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == loginRequestEmail);
+        if (user == null) throw new UserNotFoundException("Wrong email or password");
+        return user;
+    }
+    
+    private User GetUserByEmail(string loginRequestEmail)
+    {
         var user = _db.Users.FirstOrDefault(u => u.Email == loginRequestEmail);
         if (user == null) throw new UserNotFoundException("Wrong email or password");
         return user;
@@ -99,7 +107,6 @@ public class AuthService : IAuthService
             FullName = user.FullName,
             Phone = user.Phone,
             Password = passwordHash,
-            Role = user.Role,
             BirthDate = user.BirthDate.ToUniversalTime(),
             Email = user.Email,
             Gender = user.Gender,
