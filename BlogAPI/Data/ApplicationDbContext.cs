@@ -12,6 +12,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<HousesAddress> HousesAddresses { get; set; } = null!;
     public DbSet<Community> Communities { get; set; } = null!;
     public DbSet<UserCommunityRole> UserCommunityRoles { get; set; } = null!;
+    public DbSet<Post> Posts { get; set; } = null!;
     
     public DbSet<Tag> Tags { get; set; } = null!;
     
