@@ -43,4 +43,6 @@ public class User
     [Column("created_at")]
     [JsonConverter(typeof(JsonDateTimeConverter))]
     public DateTime CreatedAt { get; set; }
+    
+    public List<UserCommunityRole> UserCommunityRoles { get; set; } = new();
 }

@@ -18,4 +18,8 @@ public class UserCommunityRole
     
     [Column("role")]
     public CommunityRole Role { get; set; }
+    
+    public User User { get; set; } = null!;
+    
+    public Community Community { get; set; } = null!;
 }
