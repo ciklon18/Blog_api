@@ -18,5 +18,5 @@ public class Tag
     [Column("Name")]
     public string Name { get; set; } = string.Empty;
     
-    
+    public ICollection<PostTag> PostTags { get; set; } = new List<PostTag>();
 }
