@@ -7,12 +7,12 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BlogAPI.Migrations
 {
     /// <inheritdoc />
-    public partial class deleted_unrequired_user_atribute3 : Migration
+    public partial class fix_migration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-
+            
             migrationBuilder.CreateTable(
                 name: "users",
                 columns: table => new
@@ -37,6 +37,8 @@ namespace BlogAPI.Migrations
                         principalColumn: "id");
                 });
 
+            
+
             migrationBuilder.CreateIndex(
                 name: "IX_users_CommunityId",
                 table: "users",
@@ -46,7 +48,8 @@ namespace BlogAPI.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-
+            
+            
 
             migrationBuilder.DropTable(
                 name: "users");

@@ -3,6 +3,7 @@ using System;
 using BlogAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BlogAPI.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20231130142345_fix_migration")]
+    partial class fix_migration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -286,6 +289,91 @@ namespace BlogAPI.Migrations
                     b.ToTable("houses_address");
                 });
 
+            modelBuilder.Entity("BlogAPI.Entities.Post", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("AddressId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("address_id");
+
+                    b.Property<string>("Author")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("author");
+
+                    b.Property<Guid>("AuthorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("author_id");
+
+                    b.Property<int>("CommentsCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("comments_count");
+
+                    b.Property<Guid?>("CommunityId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("community_id");
+
+                    b.Property<string>("CommunityName")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("community_name");
+
+                    b.Property<DateTime>("CreateTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("create_time");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
+                    b.Property<bool>("HasLike")
+                        .HasColumnType("boolean")
+                        .HasColumnName("has_like");
+
+                    b.Property<string>("Image")
+                        .HasColumnType("text")
+                        .HasColumnName("image");
+
+                    b.Property<int>("Likes")
+                        .HasColumnType("integer")
+                        .HasColumnName("likes");
+
+                    b.Property<int>("ReadingTime")
+                        .HasColumnType("integer")
+                        .HasColumnName("reading_time");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("title");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("posts");
+                });
+
+            modelBuilder.Entity("BlogAPI.Entities.PostTag", b =>
+                {
+                    b.Property<Guid>("PostId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("post_id");
+
+                    b.Property<Guid>("TagId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tag_id");
+
+                    b.HasKey("PostId", "TagId");
+
+                    b.HasIndex("TagId");
+
+                    b.ToTable("post_tags");
+                });
+
             modelBuilder.Entity("BlogAPI.Entities.RefreshToken", b =>
                 {
                     b.Property<Guid>("Id")
@@ -314,6 +402,27 @@ namespace BlogAPI.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("refresh_tokens");
+                });
+
+            modelBuilder.Entity("BlogAPI.Entities.Tag", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("Id");
+
+                    b.Property<DateTime>("CreateTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreateTime");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("Name");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("tags");
                 });
 
             modelBuilder.Entity("BlogAPI.Entities.User", b =>
@@ -380,7 +489,28 @@ namespace BlogAPI.Migrations
 
                     b.HasKey("UserId", "CommunityId");
 
+                    b.HasIndex("CommunityId");
+
                     b.ToTable("user_community_role");
+                });
+
+            modelBuilder.Entity("BlogAPI.Entities.PostTag", b =>
+                {
+                    b.HasOne("BlogAPI.Entities.Post", "Post")
+                        .WithMany("PostTags")
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BlogAPI.Entities.Tag", "Tag")
+                        .WithMany("PostTags")
+                        .HasForeignKey("TagId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Post");
+
+                    b.Navigation("Tag");
                 });
 
             modelBuilder.Entity("BlogAPI.Entities.User", b =>
@@ -390,9 +520,45 @@ namespace BlogAPI.Migrations
                         .HasForeignKey("CommunityId");
                 });
 
+            modelBuilder.Entity("BlogAPI.Entities.UserCommunityRole", b =>
+                {
+                    b.HasOne("BlogAPI.Entities.Community", "Community")
+                        .WithMany("UserCommunityRoles")
+                        .HasForeignKey("CommunityId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BlogAPI.Entities.User", "User")
+                        .WithMany("UserCommunityRoles")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Community");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("BlogAPI.Entities.Community", b =>
                 {
                     b.Navigation("Administrators");
+
+                    b.Navigation("UserCommunityRoles");
+                });
+
+            modelBuilder.Entity("BlogAPI.Entities.Post", b =>
+                {
+                    b.Navigation("PostTags");
+                });
+
+            modelBuilder.Entity("BlogAPI.Entities.Tag", b =>
+                {
+                    b.Navigation("PostTags");
+                });
+
+            modelBuilder.Entity("BlogAPI.Entities.User", b =>
+                {
+                    b.Navigation("UserCommunityRoles");
                 });
 #pragma warning restore 612, 618
         }
