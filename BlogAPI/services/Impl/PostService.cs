@@ -80,10 +80,29 @@ public partial class PostService : IPostService
         var post = await GetPost(postId);
         var userId = await GetUserGuidFromToken();
         var isLikeExist = await _db.Likes.FirstOrDefaultAsync(x => x.PostId == postId && x.UserId == userId);
-        post.HasLike = (isLikeExist != null);
-        var comments = new List<CommentResponse>();
-        var tags =  ConvertPostTagsToTags(await _db.PostTags.Where(x => x.PostId == postId).Select(x => x.TagId).ToListAsync());
-        return ConvertPostToPostResponse(post, comments, tags); // TODO: Add comments
+        post.HasLike = isLikeExist != null;
+        var comments = await GetComments(postId);
+        
+        var postTags = await _db.PostTags.Where(x => x.PostId == postId).Select(x => x.TagId).ToListAsync();
+        var tags =  ConvertPostTagsToTags(postTags);
+        return ConvertPostToPostResponse(post, comments, tags); 
+    }
+
+    private async Task<List<CommentResponse>> GetComments(Guid postId)
+    {
+        var comments =  await _db.Comments.Where(comment => comment.PostId == postId).ToListAsync();
+        return comments.Select(comment => new CommentResponse
+            {
+                Author = comment.Author,
+                AuthorId = comment.AuthorId,
+                CreateTime = comment.CreateTime.ToUniversalTime(),
+                Content = comment.Content,
+                DeleteDate = comment.DeleteDate,
+                Id = comment.Id,
+                ModifiedDate = comment.ModifiedDate,
+                SubComments = comment.SubComments
+            })
+            .ToList();
     }
 
     private static PostResponse ConvertPostToPostResponse(Post post, List<CommentResponse> comments, List<TagResponse> tags)
