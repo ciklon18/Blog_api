@@ -1,6 +1,4 @@
 ﻿using System.Security.Claims;
-using System.Text.RegularExpressions;
-using BlogAPI.Configurations;
 using BlogAPI.Data;
 using BlogAPI.Entities;
 using BlogAPI.Enums;
@@ -10,19 +8,20 @@ using BlogAPI.Models.Response;
 using BlogAPI.services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 
 namespace BlogAPI.services.Impl;
 
-public partial class CommunityService : ICommunityService
+public class CommunityService : ICommunityService
 {
     private readonly ApplicationDbContext _db;
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly IPostService _postService;
 
-    public CommunityService(ApplicationDbContext db, IHttpContextAccessor httpContextAccessor)
+    public CommunityService(ApplicationDbContext db, IHttpContextAccessor httpContextAccessor, IPostService postService)
     {
         _db = db;
         _httpContextAccessor = httpContextAccessor;
+        _postService = postService;
     }
 
     public async Task<List<CommunityResponse>> GetCommunityList()
@@ -61,25 +60,16 @@ public partial class CommunityService : ICommunityService
         if (await IsCommunityClosed(communityId))
             await CheckIsUserSubscribedToCommunity(communityId, userId);
         var posts = _db.Posts.Where(x => x.CommunityId == communityId);
-        posts = GetFilteredAndSortedPosts(posts, tagIds, sort, page, pageSize);
-        return await ConvertPostsToPostPagedListResponse(posts, page, pageSize);
+        posts = _postService.GetFilteredAndSortedCommunityPosts(posts, tagIds, sort, page, pageSize);
+        return await _postService.ConvertPostsToPostPagedListResponse(posts, page, pageSize);
     }
-
-    private static IQueryable<Post> GetFilteredAndSortedPosts(IQueryable<Post> posts, ICollection<Guid> tagIds,
-        PostSorting sort, int page, int pageSize)
-    {
-        posts = GetSortedPosts(posts, sort);
-        posts = tagIds.Count != 0 ? posts.Where(x => x.PostTags.Any(tag => tagIds.Contains(tag.TagId))) : posts;
-        posts = posts.Skip((page - 1) * pageSize).Take(pageSize);
-        return posts;
-    }
-
+    
     private static void CheckIsPaginationValid(int page, int pageSize)
     {
         if (page < 1) throw new InvalidPaginationException("Invalid value for attribute page");
         if (pageSize < 1) throw new InvalidPaginationException("Invalid value for attribute pageSize");
     }
-
+    
     private async Task<bool> IsCommunityClosed(Guid communityId)
     {
         return await _db.Communities.Where(x => x.Id == communityId).Select(x => x.IsClosed).FirstOrDefaultAsync();
@@ -95,62 +85,9 @@ public partial class CommunityService : ICommunityService
     }
 
 
-    public async Task<IActionResult> PostCommunityPost(Guid communityId, PostRequest postRequest)
-    {
-        var userId = await GetUserGuidFromToken();
-        await CheckIsUserCommunityAdministrator(userId, communityId);
-
-        await CheckAreTagsExist(postRequest.Tags);
-        await CheckIsAddressExist(postRequest.AddressId);
-        CheckIsImageValid(postRequest.Image);
-
-        var communityName = await GetCommunityNameWithCommunityId(communityId);
-        var userName = await GetUserNameWithUserId(userId);
-        var postGuid = Guid.NewGuid();
-        var postTags = ConvertTagsToPostTags(postRequest.Tags, postGuid);
-
-        var post = ConvertPostRequestToPost(postRequest, userId, userName, communityId, communityName, likes: 0,
-            hasLike: false, commentsCount: 0, postTags, postGuid);
-
-        await _db.Posts.AddAsync(post);
-        await _db.SaveChangesAsync();
-        return new OkResult();
-    }
-
-    private static void CheckIsImageValid(string? image)
-    {
-        if (!string.IsNullOrEmpty(image) && !ImageLinkRegex().IsMatch(image))
-        {
-            throw new BadImageLinkException("Image link is not valid");
-        }
-    }
 
 
-    private async Task CheckAreTagsExist(ICollection<Guid> tags)
-    {
-        var tagsFromDb = await _db.Tags.Where(x => tags.Contains(x.Id)).ToListAsync();
-        var areTagsExist = tags.All(tag => tagsFromDb.Any(tagFromDb => tagFromDb.Id == tag));
-        if (!areTagsExist) throw new TagNotFoundException("Tag not found");
-    }
-
-    private async Task CheckIsAddressExist(Guid? addressId)
-    {
-        if (addressId == Guid.Empty) return;
-        var address = await _db.Addresses.FirstOrDefaultAsync(x => x.ObjectGuid == addressId);
-        if (address != null) return;
-        var housesAddress = await _db.HousesAddresses.FirstOrDefaultAsync(x => x.ObjectGuid == addressId);
-        if (housesAddress == null) throw new AddressElementNotFound("Address not found");
-    }
-
-
-    private static List<PostTag> ConvertTagsToPostTags(IEnumerable<Guid> tags, Guid postId)
-    {
-        return tags.Select(tagGuid => new PostTag
-        {
-            TagId = tagGuid,
-            PostId = postId
-        }).ToList();
-    }
+   
 
     private async Task CheckIsUserCommunityAdministrator(Guid userId, Guid communityId)
     {
@@ -160,13 +97,7 @@ public partial class CommunityService : ICommunityService
             throw new UserCommunityRoleNotFoundException("User does not have administrator role in this community");
     }
 
-    private async Task<string?> GetUserNameWithUserId(Guid userId)
-    {
-        return await _db.Users
-            .Where(x => x.Id == userId)
-            .Select(x => x.FullName)
-            .FirstOrDefaultAsync();
-    }
+
 
     private async Task<string?> GetCommunityNameWithCommunityId(Guid communityId)
     {
@@ -184,6 +115,7 @@ public partial class CommunityService : ICommunityService
             await _db.UserCommunityRoles.FirstOrDefaultAsync(x => x.UserId == userId && x.CommunityId == id);
         return new OkObjectResult(userCommunityRole?.Role is null ? "null" : userCommunityRole.Role);
     }
+
 
 
     public async Task<IActionResult> SubscribeUserToCommunity(Guid communityId)
@@ -249,36 +181,7 @@ public partial class CommunityService : ICommunityService
         return community;
     }
 
-    private static async Task<PostPagedListResponse> ConvertPostsToPostPagedListResponse(IQueryable<Post> posts,
-        int page, int pageSize)
-    {
-        var count = await posts.CountAsync();
-        if (page > count / pageSize + 1) throw new InvalidPaginationException("Invalid value for attribute page");
 
-        return new PostPagedListResponse
-        {
-            Posts = await posts.ToListAsync(),
-            Pagination = new PageInfoResponse
-            {
-                Size = pageSize,
-                Count = count,
-                Current = page
-            }
-        };
-    }
-
-
-    private static IQueryable<Post> GetSortedPosts(IQueryable<Post> posts, PostSorting sort)
-    {
-        return sort switch
-        {
-            PostSorting.CreateDesc => posts.OrderByDescending(x => x.CreateTime),
-            PostSorting.LikeDesc => posts.OrderByDescending(x => x.Likes),
-            PostSorting.CreateAsc => posts.OrderBy(x => x.CreateTime),
-            PostSorting.LikeAsc => posts.OrderBy(x => x.Likes),
-            _ => throw new ArgumentOutOfRangeException()
-        };
-    }
 
     private async Task DeleteSubscriberFromCommunity(Community community, UserCommunityRole userCommunityRole)
     {
@@ -336,30 +239,14 @@ public partial class CommunityService : ICommunityService
             .ToListAsync();
     }
 
-    private static Post ConvertPostRequestToPost(PostRequest postRequest, Guid userId, string? userName,
-        Guid communityId,
-        string? communityName, int likes, bool hasLike, int commentsCount, ICollection<PostTag>? tags, Guid postGuid)
+    public async Task<IActionResult> PostCommunityPost(Guid communityId, PostRequest postRequest)
     {
-        return new Post
-        {
-            Id = postGuid,
-            CreateTime = DateTime.Now.ToUniversalTime(),
-            Title = postRequest.Title,
-            Description = postRequest.Description,
-            ReadingTime = postRequest.ReadingTime,
-            Image = postRequest.Image,
-            AuthorId = userId,
-            Author = userName ?? "",
-            CommunityId = communityId,
-            CommunityName = communityName ?? "",
-            AddressId = postRequest.AddressId ?? Guid.Empty,
-            Likes = likes,
-            HasLike = hasLike,
-            CommentsCount = commentsCount,
-            PostTags = tags ?? new List<PostTag>()
-        };
+        var userId = await GetUserGuidFromToken();
+        await CheckIsUserCommunityAdministrator(userId, communityId);
+        var communityName = await GetCommunityNameWithCommunityId(communityId);
+        
+        return await  _postService.CreateCommunityPost(communityId, communityName, postRequest);
     }
 
-    [GeneratedRegex(pattern: EntityConstants.ImageUrlRegex)]
-    private static partial Regex ImageLinkRegex();
+
 }
