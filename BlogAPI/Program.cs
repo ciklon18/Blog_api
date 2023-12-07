@@ -62,6 +62,7 @@ services.AddScoped<IAddressService, AddressService>();
 services.AddScoped<ITagService, TagService>();
 services.AddScoped<ICommunityService, CommunityService>();
 services.AddScoped<IAuthorService, AuthorService>();
+services.AddScoped<ICommentService, CommentService>();
 
 
 services.AddAuthentication(options =>
@@ -82,13 +83,7 @@ services.AddAuthentication(options =>
     };
 });
 
-services.AddAuthorization(options =>
-{
-    options.AddPolicy("RequireAdminRole", policy =>
-    {
-        policy.RequireRole("Admin");
-    });
-});
+services.AddAuthorization();
 
 
 var app = builder.Build();

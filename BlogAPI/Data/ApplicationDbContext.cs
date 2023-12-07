@@ -18,6 +18,8 @@ public class ApplicationDbContext : DbContext
     
     public DbSet<PostTag> PostTags { get; set; } = null!;
     
+    public DbSet<Comment> Comments { get; set; } = null!;
+    
     
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
     {
