@@ -10,19 +10,18 @@ using BlogAPI.Models.Response;
 using BlogAPI.services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 
 namespace BlogAPI.services.Impl;
 
 public partial class CommunityService : ICommunityService
 {
     private readonly ApplicationDbContext _db;
-    private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly IJwtService _jwtService;
 
-    public CommunityService(ApplicationDbContext db, IHttpContextAccessor httpContextAccessor)
+    public CommunityService(ApplicationDbContext db, IJwtService jwtService)
     {
         _db = db;
-        _httpContextAccessor = httpContextAccessor;
+        _jwtService = jwtService;
     }
 
     public async Task<List<CommunityResponse>> GetCommunityList()
@@ -34,7 +33,7 @@ public partial class CommunityService : ICommunityService
 
     public async Task<List<CommunityUserResponse>> GetMyCommunityList()
     {
-        var userId = await GetUserGuidFromToken();
+        var userId = await _jwtService.GetUserGuidFromToken();
         var result = _db.UserCommunityRoles.Where(x => x.UserId == userId).ToList();
         return result.Select(x => new CommunityUserResponse(x.UserId, x.CommunityId, x.Role.ToString()))
             .ToList();
@@ -57,7 +56,7 @@ public partial class CommunityService : ICommunityService
     {
         await CheckIsThereCommunity(communityId);
         CheckIsPaginationValid(page, pageSize);
-        var userId = await GetUserGuidFromToken();
+        var userId = await _jwtService.GetUserGuidFromToken();
         if (await IsCommunityClosed(communityId))
             await CheckIsUserSubscribedToCommunity(communityId, userId);
         var posts = _db.Posts.Where(x => x.CommunityId == communityId);
@@ -97,7 +96,7 @@ public partial class CommunityService : ICommunityService
 
     public async Task<IActionResult> PostCommunityPost(Guid communityId, PostRequest postRequest)
     {
-        var userId = await GetUserGuidFromToken();
+        var userId = await _jwtService.GetUserGuidFromToken();
         await CheckIsUserCommunityAdministrator(userId, communityId);
 
         await CheckAreTagsExist(postRequest.Tags);
@@ -179,7 +178,7 @@ public partial class CommunityService : ICommunityService
     public async Task<OkObjectResult> GetCommunityUserRole(Guid id)
     {
         await CheckIsThereCommunity(id);
-        var userId = await GetUserGuidFromToken();
+        var userId = await _jwtService.GetUserGuidFromToken();
         var userCommunityRole =
             await _db.UserCommunityRoles.FirstOrDefaultAsync(x => x.UserId == userId && x.CommunityId == id);
         return new OkObjectResult(userCommunityRole?.Role is null ? "null" : userCommunityRole.Role);
@@ -188,7 +187,7 @@ public partial class CommunityService : ICommunityService
 
     public async Task<IActionResult> SubscribeUserToCommunity(Guid communityId)
     {
-        var userId = await GetUserGuidFromToken();
+        var userId = await _jwtService.GetUserGuidFromToken();
         await CheckIsUserCommunityMember(userId, communityId);
 
         var community = await GetCommunity(communityId);
@@ -199,7 +198,7 @@ public partial class CommunityService : ICommunityService
 
     public async Task<IActionResult> UnsubscribeUserToCommunity(Guid id)
     {
-        var userId = await GetUserGuidFromToken();
+        var userId = await _jwtService.GetUserGuidFromToken();
         var userCommunityRole = await GetUserCommunityRole(userId, id);
 
         var community = await GetCommunity(id);
@@ -312,21 +311,7 @@ public partial class CommunityService : ICommunityService
         };
     }
 
-    private async Task<Guid> GetUserGuidFromToken()
-    {
-        var userEmail = _httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.Email);
-        if (userEmail == null) throw new UserNotFoundException("User not found");
-        await CheckIsRefreshTokenValid(userEmail);
-        var user = await _db.Users.FirstOrDefaultAsync(x => x.Email == userEmail);
-        if (user == null) throw new UserNotFoundException("User not found");
-        return user.Id;
-    }
 
-    private async Task CheckIsRefreshTokenValid(string email)
-    {
-        var isEmailUsed = await _db.RefreshTokens.AnyAsync(u => u.Email == email);
-        if (!isEmailUsed) throw new UnauthorizedException("Refresh token is not valid");
-    }
 
     private async Task<List<Guid>> GetCommunityAdminIds(Guid communityId)
     {
