@@ -11,4 +11,5 @@ public interface IJwtService
     public Task ValidateRefreshTokenAsync(string? token);
     public string GetEmailFromRefreshToken(string? token);
     public Task<string?> GetRefreshTokenByEmailAsync(string? email);
+    public Task<Guid> GetUserGuidFromToken();
 }
