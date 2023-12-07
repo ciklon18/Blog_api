@@ -147,6 +147,33 @@ public class ExceptionMiddleware
                 StatusCode = context.Response.StatusCode
             });
         }
+        catch (ForbiddenWorkWithCommentException ex)
+        {
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            await context.Response.WriteAsJsonAsync(new Error
+            {
+                Message = ex.Message,
+                StatusCode = context.Response.StatusCode
+            });
+        }
+        catch(EmptyCommentException ex)
+        {
+            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+            await context.Response.WriteAsJsonAsync(new Error
+            {
+                Message = ex.Message,
+                StatusCode = context.Response.StatusCode
+            });
+        }
+        catch (CommentNotFoundException ex)
+        {
+            context.Response.StatusCode = StatusCodes.Status404NotFound;
+            await context.Response.WriteAsJsonAsync(new Error
+            {
+                Message = ex.Message,
+                StatusCode = context.Response.StatusCode
+            });
+        }
         catch (UserCommunityRoleNotFoundException ex)
         {
             context.Response.StatusCode = StatusCodes.Status403Forbidden;
