@@ -94,10 +94,7 @@ public class JwtService : IJwtService
         CheckEmailNotNull(email);
 
         var refreshToken = await _db.RefreshTokens.FirstOrDefaultAsync(t => t.Email == email);
-        if (refreshToken == null) return null;
-        CheckTokenNotRevoked(refreshToken);
-        CheckTokenNotExpired(refreshToken);
-        return refreshToken.Token;
+        return refreshToken?.Token;
     }
 
     private static void CheckTokenNotNull(string? token)
