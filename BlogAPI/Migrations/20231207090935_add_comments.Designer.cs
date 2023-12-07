@@ -3,6 +3,7 @@ using System;
 using BlogAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BlogAPI.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20231207090935_add_comments")]
+    partial class add_comments
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -332,23 +335,6 @@ namespace BlogAPI.Migrations
                     b.ToTable("houses_address");
                 });
 
-            modelBuilder.Entity("BlogAPI.Entities.Like", b =>
-                {
-                    b.Property<Guid>("PostId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("post_id");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("PostId", "UserId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("likes");
-                });
-
             modelBuilder.Entity("BlogAPI.Entities.Post", b =>
                 {
                     b.Property<Guid>("Id")
@@ -552,25 +538,6 @@ namespace BlogAPI.Migrations
                     b.HasIndex("CommunityId");
 
                     b.ToTable("user_community_role");
-                });
-
-            modelBuilder.Entity("BlogAPI.Entities.Like", b =>
-                {
-                    b.HasOne("BlogAPI.Entities.Post", "Post")
-                        .WithMany()
-                        .HasForeignKey("PostId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("BlogAPI.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Post");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("BlogAPI.Entities.PostTag", b =>

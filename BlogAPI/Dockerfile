@@ -15,3 +15,4 @@ RUN dotnet publish "BlogAPI.csproj" -c Release -o /app
 
 COPY --from=build /app .
 CMD ["dotnet", "/BlogAPI.dll"]
+

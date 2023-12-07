@@ -14,13 +14,13 @@ namespace BlogAPI.services.Impl;
 public class CommunityService : ICommunityService
 {
     private readonly ApplicationDbContext _db;
-    private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IPostService _postService;
+    private readonly IJwtService _jwtService;
 
-    public CommunityService(ApplicationDbContext db, IHttpContextAccessor httpContextAccessor, IPostService postService)
+    public CommunityService(ApplicationDbContext db, IJwtService jwtService,  IPostService postService)
     {
         _db = db;
-        _httpContextAccessor = httpContextAccessor;
+        _jwtService = jwtService;
         _postService = postService;
     }
 
@@ -33,7 +33,7 @@ public class CommunityService : ICommunityService
 
     public async Task<List<CommunityUserResponse>> GetMyCommunityList()
     {
-        var userId = await GetUserGuidFromToken();
+        var userId = await _jwtService.GetUserGuidFromToken();
         var result = _db.UserCommunityRoles.Where(x => x.UserId == userId).ToList();
         return result.Select(x => new CommunityUserResponse(x.UserId, x.CommunityId, x.Role.ToString()))
             .ToList();
@@ -56,7 +56,7 @@ public class CommunityService : ICommunityService
     {
         await CheckIsThereCommunity(communityId);
         CheckIsPaginationValid(page, pageSize);
-        var userId = await GetUserGuidFromToken();
+        var userId = await _jwtService.GetUserGuidFromToken();
         if (await IsCommunityClosed(communityId))
             await CheckIsUserSubscribedToCommunity(communityId, userId);
         var posts = _db.Posts.Where(x => x.CommunityId == communityId);
@@ -110,7 +110,7 @@ public class CommunityService : ICommunityService
     public async Task<OkObjectResult> GetCommunityUserRole(Guid id)
     {
         await CheckIsThereCommunity(id);
-        var userId = await GetUserGuidFromToken();
+        var userId = await _jwtService.GetUserGuidFromToken();
         var userCommunityRole =
             await _db.UserCommunityRoles.FirstOrDefaultAsync(x => x.UserId == userId && x.CommunityId == id);
         return new OkObjectResult(userCommunityRole?.Role is null ? "null" : userCommunityRole.Role);
@@ -120,7 +120,7 @@ public class CommunityService : ICommunityService
 
     public async Task<IActionResult> SubscribeUserToCommunity(Guid communityId)
     {
-        var userId = await GetUserGuidFromToken();
+        var userId = await _jwtService.GetUserGuidFromToken();
         await CheckIsUserCommunityMember(userId, communityId);
 
         var community = await GetCommunity(communityId);
@@ -131,7 +131,7 @@ public class CommunityService : ICommunityService
 
     public async Task<IActionResult> UnsubscribeUserToCommunity(Guid id)
     {
-        var userId = await GetUserGuidFromToken();
+        var userId = await _jwtService.GetUserGuidFromToken();
         var userCommunityRole = await GetUserCommunityRole(userId, id);
 
         var community = await GetCommunity(id);
@@ -215,21 +215,7 @@ public class CommunityService : ICommunityService
         };
     }
 
-    private async Task<Guid> GetUserGuidFromToken()
-    {
-        var userEmail = _httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.Email);
-        if (userEmail == null) throw new UserNotFoundException("User not found");
-        await CheckIsRefreshTokenValid(userEmail);
-        var user = await _db.Users.FirstOrDefaultAsync(x => x.Email == userEmail);
-        if (user == null) throw new UserNotFoundException("User not found");
-        return user.Id;
-    }
 
-    private async Task CheckIsRefreshTokenValid(string email)
-    {
-        var isEmailUsed = await _db.RefreshTokens.AnyAsync(u => u.Email == email);
-        if (!isEmailUsed) throw new UnauthorizedException("Refresh token is not valid");
-    }
 
     private async Task<List<Guid>> GetCommunityAdminIds(Guid communityId)
     {
@@ -241,7 +227,7 @@ public class CommunityService : ICommunityService
 
     public async Task<IActionResult> PostCommunityPost(Guid communityId, PostRequest postRequest)
     {
-        var userId = await GetUserGuidFromToken();
+        var userId =await _jwtService.GetUserGuidFromToken();
         await CheckIsUserCommunityAdministrator(userId, communityId);
         var communityName = await GetCommunityNameWithCommunityId(communityId);
         

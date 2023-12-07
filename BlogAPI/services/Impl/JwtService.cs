@@ -15,12 +15,14 @@ public class JwtService : IJwtService
     private readonly JwtSecurityTokenHandler _tokenHandler;
     private readonly Tokens _tokens;
     private readonly ApplicationDbContext _db;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public JwtService(JwtSecurityTokenHandler tokenHandler, Tokens tokens, ApplicationDbContext db)
+    public JwtService(JwtSecurityTokenHandler tokenHandler, Tokens tokens, ApplicationDbContext db, IHttpContextAccessor httpContextAccessor)
     {
         _tokenHandler = tokenHandler;
         _tokens = tokens;
         _db = db;
+        _httpContextAccessor = httpContextAccessor;
     }
 
     public string GenerateAccessToken(User? user)
@@ -69,6 +71,22 @@ public class JwtService : IJwtService
         var token = _tokenHandler.CreateToken(tokenDescriptor);
         return _tokenHandler.WriteToken(token);
     }
+    
+    public async Task<Guid> GetUserGuidFromToken()
+    {
+        var userEmail = _httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.Email);
+        if (userEmail == null) throw new UserNotFoundException("User not found");
+        await CheckIsRefreshTokenValid(userEmail);
+        var user = await _db.Users.FirstOrDefaultAsync(x => x.Email == userEmail);
+        if (user == null) throw new UserNotFoundException("User not found");
+        return user.Id;
+    }
+
+    private async Task CheckIsRefreshTokenValid(string email)
+    {
+        var isEmailUsed = await _db.RefreshTokens.AnyAsync(u => u.Email == email);
+        if (!isEmailUsed) throw new UnauthorizedException("Refresh token is not valid");
+    }
 
 
     public async Task ValidateRefreshTokenAsync(string? token)
@@ -94,10 +112,7 @@ public class JwtService : IJwtService
         CheckEmailNotNull(email);
 
         var refreshToken = await _db.RefreshTokens.FirstOrDefaultAsync(t => t.Email == email);
-        if (refreshToken == null) return null;
-        CheckTokenNotRevoked(refreshToken);
-        CheckTokenNotExpired(refreshToken);
-        return refreshToken.Token;
+        return refreshToken?.Token;
     }
 
     private static void CheckTokenNotNull(string? token)
