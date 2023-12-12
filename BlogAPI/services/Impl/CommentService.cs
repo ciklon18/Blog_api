@@ -52,7 +52,7 @@ public class CommentService : ICommentService
         };
     }
 
-    public async Task<IActionResult> CreateComment(Guid communityId, CreateCommentRequest request)
+    public async Task<IActionResult> CreateComment(Guid postId, CreateCommentRequest request)
     {
         CheckIsCommentEmpty(request.Content);
         if (request.ParentId != null && request.ParentId != Guid.Empty)
@@ -62,7 +62,7 @@ public class CommentService : ICommentService
         }
         var userId = await _jwtService.GetUserGuidFromToken();
         var author = await GetUserByGuid(userId);
-        var comment = ConvertRequestToComment(request, author.FullName, author.Id);
+        var comment = ConvertRequestToComment(request, author.FullName, author.Id, postId);
         _db.Comments.Add(comment);
         await _db.SaveChangesAsync();
         return new OkResult();
@@ -136,7 +136,7 @@ public class CommentService : ICommentService
         await _db.SaveChangesAsync();
     }
 
-    private static Comment ConvertRequestToComment(CreateCommentRequest request, string authorName, Guid authorId)
+    private static Comment ConvertRequestToComment(CreateCommentRequest request, string authorName, Guid authorId, Guid postId)
     {
         return new Comment
         {
@@ -148,6 +148,7 @@ public class CommentService : ICommentService
             DeleteDate = null,
             ModifiedDate = null,
             ParentId = request.ParentId,
+            PostId = postId,
             SubComments = 0,
         };
     }

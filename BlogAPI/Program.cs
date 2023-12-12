@@ -63,6 +63,7 @@ services.AddScoped<ITagService, TagService>();
 services.AddScoped<ICommunityService, CommunityService>();
 services.AddScoped<IAuthorService, AuthorService>();
 services.AddScoped<ICommentService, CommentService>();
+services.AddScoped<IPostService, PostService>();
 
 services.AddHostedService<TokenCleanupService>();
 

@@ -6,6 +6,7 @@ namespace BlogAPI.Entities;
 [Table("comments")]
 public class Comment
 {
+
     [Key]
     [Column("id")]
     public Guid Id { get; set; }
@@ -35,6 +36,9 @@ public class Comment
     
     [Column("parent_id")]
     public Guid? ParentId { get; set; }
+    
+    [Column("post_id")]
+    public required Guid PostId { get; set; }
 
     [Required]
     [Column("sub_comments")]

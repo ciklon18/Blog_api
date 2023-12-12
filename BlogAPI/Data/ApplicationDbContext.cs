@@ -17,6 +17,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<Tag> Tags { get; set; } = null!;
     
     public DbSet<PostTag> PostTags { get; set; } = null!;
+    public DbSet<Like> Likes { get; set; } = null!;
     
     public DbSet<Comment> Comments { get; set; } = null!;
     
@@ -31,6 +32,8 @@ public class ApplicationDbContext : DbContext
             .HasKey(ucr => new { ucr.UserId, ucr.CommunityId });
         modelBuilder.Entity<PostTag>()
             .HasKey(pt => new { pt.PostId, pt.TagId });
+        modelBuilder.Entity<Like>()
+            .HasKey(l => new { l.PostId, l.UserId });
 
         modelBuilder.Entity<PostTag>()
             .HasOne(pt => pt.Post)
