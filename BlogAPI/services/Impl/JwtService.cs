@@ -62,7 +62,7 @@ public class JwtService : IJwtService
         {
             Subject = new ClaimsIdentity(new[]
             {
-                new Claim(ClaimTypes.Email, user?.Email ?? ""),
+                new Claim(ClaimTypes.NameIdentifier, user?.Id.ToString() ?? string.Empty),
             }),
             Expires = DateTime.UtcNow.AddMinutes(expirationTime),
             SigningCredentials =
@@ -89,12 +89,13 @@ public class JwtService : IJwtService
     }
 
 
-    public async Task ValidateRefreshTokenAsync(string? token)
+    public Task ValidateRefreshTokenAsync(string? token)
     {
         CheckTokenNotNull(token);
         var refreshToken =  _db.RefreshTokens.FirstOrDefault(t => t.Token == token);
         CheckTokenNotRevoked(refreshToken);
         CheckTokenNotExpired(refreshToken);
+        return Task.CompletedTask;
     }
     
     public string GetEmailFromRefreshToken(string? token)
@@ -103,7 +104,7 @@ public class JwtService : IJwtService
         var refreshToken =  _db.RefreshTokens.FirstOrDefault(t => t.Token == token);
         CheckTokenNotRevoked(refreshToken);
         CheckTokenNotExpired(refreshToken);
-        if (refreshToken == null) throw new NullTokenException("GetEmailFromRefreshTokenAsync: Refresh token is null");
+        if (refreshToken == null) throw new NullTokenException("Refresh token is null");
         return refreshToken.Email;
     }
 

@@ -64,6 +64,8 @@ services.AddScoped<ICommunityService, CommunityService>();
 services.AddScoped<IAuthorService, AuthorService>();
 services.AddScoped<ICommentService, CommentService>();
 
+services.AddHostedService<TokenCleanupService>();
+
 
 services.AddAuthentication(options =>
 {
@@ -108,5 +110,5 @@ app.UseHttpsRedirection();
 app.MapControllers();
 
 
-
+ 
 app.Run();
