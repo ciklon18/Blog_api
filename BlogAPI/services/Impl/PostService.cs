@@ -1,12 +1,12 @@
-﻿using System.Security.Claims;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using BlogAPI.Configurations;
 using BlogAPI.Data;
+using BlogAPI.DTOs;
 using BlogAPI.Entities;
 using BlogAPI.Enums;
 using BlogAPI.Exceptions;
+using BlogAPI.Models;
 using BlogAPI.Models.Request;
-using BlogAPI.Models.Response;
 using BlogAPI.services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -16,28 +16,54 @@ namespace BlogAPI.services.Impl;
 public partial class PostService : IPostService
 {
     private readonly ApplicationDbContext _db;
-    private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly IJwtService _jwtService;
 
-    public PostService(ApplicationDbContext db, IHttpContextAccessor httpContextAccessor)
+    public PostService(ApplicationDbContext db, IJwtService jwtService)
     {
         _db = db;
-        _httpContextAccessor = httpContextAccessor;
+        _jwtService = jwtService;
     }
 
 
-    public async Task<PostPagedListResponse> GetPosts(List<Guid> tagIds, string? authorName, int minReadingTime,
+    public async Task<PostPagedListDto> GetPosts(List<Guid> tagIds, string? authorName, int minReadingTime,
         int maxReadingTime, PostSorting? sort,
         bool isOnlyMyCommunities, int page, int pageSize)
     {
         var authors = await GetAuthorsByAuthorName(authorName);
         CheckIsPaginationValid(page, pageSize);
         var posts = _db.Posts.Where(x => authors.Contains(x.AuthorId) && x.CommunityId == Guid.Empty);
-        posts = GetFilteredAndSortedPostsWithMinutes(posts, tagIds, sort, page, pageSize, minReadingTime,
+        var postsDto = ConvertPostsToPostDtoList(posts);
+        
+        postsDto = GetFilteredAndSortedPostsWithMinutes(postsDto, tagIds, sort, page, pageSize, minReadingTime,
             maxReadingTime);
-        return await ConvertPostsToPostPagedListResponse(posts, page, pageSize);
+
+        return await ConvertPostsToPostPagedListResponse(postsDto, page, pageSize);
     }
 
-    private IQueryable<Post> GetFilteredAndSortedPostsWithMinutes(IQueryable<Post> posts, List<Guid> tagIds,
+    public IQueryable<PostDto> ConvertPostsToPostDtoList(IEnumerable<Post> posts)
+    {
+        return posts.AsQueryable().Select(post => new PostDto
+            {
+                AddressId = post.AddressId,
+                Author = post.Author,
+                AuthorId = post.AuthorId,
+                CommentsCount = post.CommentsCount,
+                CommunityId = post.CommunityId,
+                CommunityName = post.CommunityName,
+                CreateTime = post.CreateTime,
+                Description = post.Description,
+                HasLike = post.HasLike,
+                Id = post.Id,
+                Title = post.Title,
+                ReadingTime = post.ReadingTime,
+                Image = post.Image,
+                Likes = post.Likes,
+                Tags = ConvertPostTagsToTags(post.PostTags.Select(tag => tag.TagId).ToList())
+            });
+    }
+
+    private static IQueryable<PostDto> GetFilteredAndSortedPostsWithMinutes(IQueryable<PostDto> posts,
+        List<Guid> tagIds,
         PostSorting? sort, int page, int pageSize, int minReadingTime, int maxReadingTime)
     {
         var postWithoutMinutes = GetFilteredAndSortedPosts(posts, tagIds, sort, page, pageSize);
@@ -75,23 +101,23 @@ public partial class PostService : IPostService
     }
 
 
-    public async Task<PostResponse> GetPostById(Guid postId)
+    public async Task<PostFullDto> GetPostById(Guid postId)
     {
         var post = await GetPost(postId);
         var userId = await GetUserGuidFromToken();
         var isLikeExist = await _db.Likes.FirstOrDefaultAsync(x => x.PostId == postId && x.UserId == userId);
         post.HasLike = isLikeExist != null;
         var comments = await GetComments(postId);
-        
+
         var postTags = await _db.PostTags.Where(x => x.PostId == postId).Select(x => x.TagId).ToListAsync();
-        var tags =  ConvertPostTagsToTags(postTags);
-        return ConvertPostToPostResponse(post, comments, tags); 
+        var tags = ConvertPostTagsToTags(postTags);
+        return ConvertPostToPostResponse(post, comments, tags);
     }
 
-    private async Task<List<CommentResponse>> GetComments(Guid postId)
+    private async Task<List<CommentDto>> GetComments(Guid postId)
     {
-        var comments =  await _db.Comments.Where(comment => comment.PostId == postId).ToListAsync();
-        return comments.Select(comment => new CommentResponse
+        var comments = await _db.Comments.Where(comment => comment.PostId == postId).ToListAsync();
+        return comments.Select(comment => new CommentDto
             {
                 Author = comment.Author,
                 AuthorId = comment.AuthorId,
@@ -105,9 +131,9 @@ public partial class PostService : IPostService
             .ToList();
     }
 
-    private static PostResponse ConvertPostToPostResponse(Post post, List<CommentResponse> comments, List<TagResponse> tags)
+    private static PostFullDto ConvertPostToPostResponse(Post post, List<CommentDto> comments, List<TagDto> tags)
     {
-        return new PostResponse(
+        return new PostFullDto(
             post.Id,
             post.CreateTime,
             post.Title,
@@ -125,17 +151,16 @@ public partial class PostService : IPostService
             tags,
             comments
         );
-        
     }
 
-    private List<TagResponse> ConvertPostTagsToTags(List<Guid> toList)
+    private List<TagDto> ConvertPostTagsToTags(List<Guid> toList)
     {
-        var tags = new List<TagResponse>();
+        var tags = new List<TagDto>();
         foreach (var tagGuid in toList)
         {
             var tag = _db.Tags.FirstOrDefault(x => x.Id == tagGuid);
             if (tag != null)
-                tags.Add(new TagResponse
+                tags.Add(new TagDto
                 {
                     CreateTime = tag.CreateTime,
                     Id = tag.Id,
@@ -163,6 +188,7 @@ public partial class PostService : IPostService
         await _db.SaveChangesAsync();
         return new OkResult();
     }
+
     public async Task<IActionResult> UnlikePost(Guid postId)
     {
         var post = await GetPost(postId);
@@ -193,8 +219,6 @@ public partial class PostService : IPostService
         if (post == null) throw new PostNotFoundException("Post not found");
         return post;
     }
-
-
 
 
     private async Task<string?> GetUserNameWithUserId(Guid userId)
@@ -281,16 +305,16 @@ public partial class PostService : IPostService
         };
     }
 
-    public async Task<PostPagedListResponse> ConvertPostsToPostPagedListResponse(IQueryable<Post> posts,
+    public async Task<PostPagedListDto> ConvertPostsToPostPagedListResponse(IQueryable<PostDto> posts,
         int page, int pageSize)
     {
         var count = await posts.CountAsync();
         if (page > count / pageSize + 1) throw new InvalidPaginationException("Invalid value for attribute page");
 
-        return new PostPagedListResponse
+        return new PostPagedListDto
         {
             Posts = await posts.ToListAsync(),
-            Pagination = new PageInfoResponse
+            Pagination = new PageInfoModel
             {
                 Size = pageSize,
                 Count = count,
@@ -299,25 +323,25 @@ public partial class PostService : IPostService
         };
     }
 
-    public IQueryable<Post> GetFilteredAndSortedCommunityPosts(IQueryable<Post> posts, List<Guid> tagIds,
+    public IQueryable<PostDto> GetFilteredAndSortedCommunityPosts(IQueryable<PostDto> posts, List<Guid> tagIds,
         PostSorting sort, int page, int pageSize)
     {
         return GetFilteredAndSortedPosts(posts, tagIds, sort, page, pageSize);
     }
 
 
-    private static IQueryable<Post> GetFilteredAndSortedPosts(IQueryable<Post> posts, List<Guid> tagIds,
+    private static IQueryable<PostDto> GetFilteredAndSortedPosts(IQueryable<PostDto> posts, ICollection<Guid> tagIds,
         PostSorting? sort, int page, int pageSize)
     {
         var updatedPosts = GetSortedPosts(posts, sort);
         updatedPosts = tagIds.Count != 0
-            ? updatedPosts.Where(x => x.PostTags.Any(tag => tagIds.Contains(tag.TagId)))
+            ? updatedPosts.Where(x => x.Tags.Any(tag => tagIds.Contains(tag.Id)))
             : updatedPosts;
         updatedPosts = updatedPosts.Skip((page - 1) * pageSize).Take(pageSize);
         return updatedPosts;
     }
 
-    private static IQueryable<Post> GetSortedPosts(IQueryable<Post> posts, PostSorting? sort)
+    private static IQueryable<PostDto> GetSortedPosts(IQueryable<PostDto> posts, PostSorting? sort)
     {
         if (sort == null) return posts;
         return sort switch
@@ -332,18 +356,18 @@ public partial class PostService : IPostService
 
     private async Task<Guid> GetUserGuidFromToken()
     {
-        var userEmail = _httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.Email);
-        if (userEmail == null) throw new UserNotFoundException("User not found");
-        await CheckIsRefreshTokenValid(userEmail);
-        var user = await _db.Users.FirstOrDefaultAsync(x => x.Email == userEmail);
+        var userGuid = await _jwtService.GetUserGuidFromTokenAsync();
+        if (userGuid == Guid.Empty) throw new UserNotFoundException("User not found");
+        await CheckIsRefreshTokenValid(userGuid);
+        var user = await _db.Users.FirstOrDefaultAsync(x => x.Id == userGuid);
         if (user == null) throw new UserNotFoundException("User not found");
         return user.Id;
     }
 
-    private async Task CheckIsRefreshTokenValid(string email)
+    private async Task CheckIsRefreshTokenValid(Guid userId)
     {
-        var isEmailUsed = await _db.RefreshTokens.AnyAsync(u => u.Email == email);
-        if (!isEmailUsed) throw new UnauthorizedException("Refresh token is not valid");
+        var isGuidUsed = await _db.RefreshTokens.AnyAsync(u => u.UserId == userId);
+        if (!isGuidUsed) throw new UnauthorizedException("Refresh token is not valid");
     }
 
     [GeneratedRegex(pattern: EntityConstants.ImageUrlRegex)]

@@ -1,4 +1,5 @@
-﻿using BlogAPI.Models.Response;
+﻿using BlogAPI.DTOs;
+using BlogAPI.Models.Response;
 
 namespace BlogAPI.services.Interfaces;
 

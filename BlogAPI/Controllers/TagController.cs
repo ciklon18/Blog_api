@@ -1,4 +1,5 @@
-﻿using BlogAPI.Models.Response;
+﻿using BlogAPI.DTOs;
+using BlogAPI.Models.Response;
 using BlogAPI.services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 

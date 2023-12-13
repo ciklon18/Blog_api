@@ -1,4 +1,4 @@
-﻿namespace BlogAPI.Models.Response;
+﻿namespace BlogAPI.DTOs;
 
 public record TagDto(Guid Id, DateTime CreateTime, string Name)
 {

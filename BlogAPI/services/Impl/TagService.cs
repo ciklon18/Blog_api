@@ -1,5 +1,5 @@
 ﻿using BlogAPI.Data;
-using BlogAPI.Models.Response;
+using BlogAPI.DTOs;
 using BlogAPI.services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
