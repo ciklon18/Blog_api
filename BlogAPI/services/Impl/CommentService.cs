@@ -2,8 +2,6 @@
 using BlogAPI.DTOs;
 using BlogAPI.Entities;
 using BlogAPI.Exceptions;
-using BlogAPI.Models.Request;
-using BlogAPI.Models.Response;
 using BlogAPI.services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -105,12 +103,10 @@ public class CommentService : ICommentService
             await _db.SaveChangesAsync();
             return new OkResult();
         }
-        else
-        {
-            _db.Comments.Remove(comment);
-            await _db.SaveChangesAsync();
-            return new OkResult();
-        }
+
+        _db.Comments.Remove(comment);
+        await _db.SaveChangesAsync();
+        return new OkResult();
 
     }
 
@@ -150,7 +146,7 @@ public class CommentService : ICommentService
             ModifiedDate = null,
             ParentId = dto.ParentId,
             PostId = postId,
-            SubComments = 0,
+            SubComments = 0
         };
     }
 }

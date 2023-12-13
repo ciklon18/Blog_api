@@ -1,12 +1,9 @@
-﻿using BlogAPI.Configurations;
-using BlogAPI.Data;
+﻿using BlogAPI.Data;
 using BlogAPI.DTOs;
 using BlogAPI.Entities;
 using BlogAPI.Enums;
 using BlogAPI.Exceptions;
 using BlogAPI.Models;
-using BlogAPI.Models.Request;
-using BlogAPI.Models.Response;
 using BlogAPI.services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -35,14 +32,18 @@ public class UserService : IUserService
 
     public async Task<IActionResult> UpdateUserProfileAsync(UserEditModel userEditModel)
     {
-        await CheckIsEmailInUseAsync(userEditModel.Email);
+        
         var userGuid = await GetUserGuid();
+        
+        await CheckIsEmailInUseAsync(userEditModel.Email, userGuid);
         await CheckIsRefreshTokenValid(userGuid);
 
         var user = await GetUserByGuidAsync(userGuid);
         var updatedUser = GetUpdatedUser(user, userEditModel);
         
-        _db.Users.Update(updatedUser);
+        _db.Users.Remove(user);
+        _db.Users.Add(updatedUser);
+        
         await _db.SaveChangesAsync();
         
 
@@ -89,6 +90,7 @@ public class UserService : IUserService
     {
         return new User
         {
+            Id = user.Id,
             Email = userEditModel.Email != "" ? userEditModel.Email : user.Email,
             FullName = userEditModel.FullName != "" ? userEditModel.FullName : user.FullName,
             BirthDate = DateTime.Parse(userEditModel.BirthDate).ToUniversalTime(),
@@ -109,9 +111,9 @@ public class UserService : IUserService
         };
     }
 
-    private async Task CheckIsEmailInUseAsync(string email)
+    private async Task CheckIsEmailInUseAsync(string email, Guid userId)
     {
-        var isEmailUsed = await _db.Users.AnyAsync(u => u.Email == email);
+        var isEmailUsed = await _db.Users.AnyAsync(u => u.Email == email && u.Id != userId);
         if (isEmailUsed) throw new UserAlreadyExistsException("Email is already in use");
     }
 }

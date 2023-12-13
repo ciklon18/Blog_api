@@ -1,5 +1,4 @@
-﻿using BlogAPI.DTOs;
-using BlogAPI.Models;
+﻿using BlogAPI.Models;
 using BlogAPI.Models.Request;
 using BlogAPI.Models.Response;
 using Microsoft.AspNetCore.Mvc;
@@ -11,5 +10,5 @@ public interface IAuthService
     Task<RegistrationResponse> Register(UserRegisterModel userRegisterModel);
     Task<LoginResponse> Login(UserLoginModel userLoginModel);
     Task<IActionResult> Logout();
-    RefreshResponse Refresh(UpdateRefreshDto updateRefreshDto);
+    RefreshResponse Refresh(RefreshRequest refreshRequest);
 }

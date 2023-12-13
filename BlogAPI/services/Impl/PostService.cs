@@ -31,7 +31,7 @@ public partial class PostService : IPostService
     {
         var authors = await GetAuthorsByAuthorName(authorName);
         CheckIsPaginationValid(page, pageSize);
-        var posts = _db.Posts.Where(x => authors.Contains(x.AuthorId) && x.CommunityId == Guid.Empty);
+        var posts = GetPostsWithTags(authors);
         var postsDto = ConvertPostsToPostDtoList(posts);
         
         postsDto = GetFilteredAndSortedPostsWithMinutes(postsDto, tagIds, sort, page, pageSize, minReadingTime,
@@ -40,27 +40,64 @@ public partial class PostService : IPostService
         return await ConvertPostsToPostPagedListResponse(postsDto, page, pageSize);
     }
 
+    private IEnumerable<Post> GetPostsWithTags(List<Guid> authors)
+    {
+        var posts = _db.Posts.Where(x => authors.Contains(x.AuthorId) && x.CommunityId == Guid.Empty).ToList();
+        foreach (var post in posts)
+        {
+            var postTags = _db.PostTags.Where(x => x.PostId == post.Id).Select(x => x.TagId).ToList(); 
+            post.PostTags = ConvertTagsToPostTags(postTags, post.Id);
+        }
+
+        return posts;
+    }
+
+
     public IQueryable<PostDto> ConvertPostsToPostDtoList(IEnumerable<Post> posts)
     {
-        return posts.AsQueryable().Select(post => new PostDto
-            {
-                AddressId = post.AddressId,
-                Author = post.Author,
-                AuthorId = post.AuthorId,
-                CommentsCount = post.CommentsCount,
-                CommunityId = post.CommunityId,
-                CommunityName = post.CommunityName,
-                CreateTime = post.CreateTime,
-                Description = post.Description,
-                HasLike = post.HasLike,
-                Id = post.Id,
-                Title = post.Title,
-                ReadingTime = post.ReadingTime,
-                Image = post.Image,
-                Likes = post.Likes,
-                Tags = ConvertPostTagsToTags(post.PostTags.Select(tag => tag.TagId).ToList())
-            });
+        var postDtoList = (from post in posts
+        let tags = post.PostTags.Select(ConvertPostTagToTagDto).ToList()
+        select new PostDto
+        {
+            AddressId = post.AddressId,
+            Author = post.Author,
+            AuthorId = post.AuthorId,
+            CommentsCount = post.CommentsCount,
+            CommunityId = post.CommunityId,
+            CommunityName = post.CommunityName,
+            CreateTime = post.CreateTime,
+            Description = post.Description,
+            HasLike = post.HasLike,
+            Id = post.Id,
+            Title = post.Title,
+            ReadingTime = post.ReadingTime,
+            Image = post.Image,
+            Likes = post.Likes,
+            Tags = tags
+        }).ToList();
+        return postDtoList.AsQueryable();
     }
+
+    private TagDto ConvertPostTagToTagDto(PostTag postTag)
+    {
+        var tag = _db.Tags.Where(x => x.Id == postTag.TagId).Select(x => new TagDto
+        {
+            Id = x.Id,
+            Name = x.Name,
+            CreateTime = x.CreateTime
+        }).FirstOrDefault();
+
+        if (tag == null)
+            return new TagDto
+            {
+                CreateTime = DateTime.MinValue,
+                Id = Guid.Empty,
+                Name = ""
+            };
+
+        return tag;
+    }
+
 
     private static IQueryable<PostDto> GetFilteredAndSortedPostsWithMinutes(IQueryable<PostDto> posts,
         List<Guid> tagIds,
@@ -305,22 +342,22 @@ public partial class PostService : IPostService
         };
     }
 
-    public async Task<PostPagedListDto> ConvertPostsToPostPagedListResponse(IQueryable<PostDto> posts,
+    public Task<PostPagedListDto> ConvertPostsToPostPagedListResponse(IQueryable<PostDto> posts,
         int page, int pageSize)
     {
-        var count = await posts.CountAsync();
+        var count = posts.Count();
         if (page > count / pageSize + 1) throw new InvalidPaginationException("Invalid value for attribute page");
 
-        return new PostPagedListDto
+        return Task.FromResult(new PostPagedListDto
         {
-            Posts = await posts.ToListAsync(),
+            Posts = posts.ToList(),
             Pagination = new PageInfoModel
             {
                 Size = pageSize,
                 Count = count,
                 Current = page
             }
-        };
+        });
     }
 
     public IQueryable<PostDto> GetFilteredAndSortedCommunityPosts(IQueryable<PostDto> posts, List<Guid> tagIds,

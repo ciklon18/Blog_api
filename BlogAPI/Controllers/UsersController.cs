@@ -50,10 +50,10 @@ public class UsersController : ControllerBase
     
     
     [HttpPost("refresh")]
-    public IActionResult Refresh([FromBody] UpdateRefreshDto updateRefreshDto)
+    public IActionResult Refresh([FromBody] RefreshRequest refreshRequest)
     {
         
-        var refreshResponse = _authService.Refresh(updateRefreshDto);
+        var refreshResponse = _authService.Refresh(refreshRequest);
         return Ok(refreshResponse);
     }
     

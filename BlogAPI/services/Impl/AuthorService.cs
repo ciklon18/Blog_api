@@ -2,7 +2,6 @@
 using BlogAPI.DTOs;
 using BlogAPI.Entities;
 using BlogAPI.Enums;
-using BlogAPI.Models.Response;
 using BlogAPI.services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -21,11 +20,16 @@ public class AuthorService : IAuthorService
     {
         var authors = await GetAuthorsWithDetails();
         var authorIds = authors.Select(author => author.UserId).ToList();
+        
         var communities = await GetCommunities(authorIds);
         var communitiesIds = communities.Select(community => community.Id).ToList();
         var posts = await GetPostsForCommunities(communitiesIds);
         var (likesHashMap, postsHashMap) = GenerateHashMaps(posts);
-        return authors.Select(author => MapToAuthorResponse(author, likesHashMap, postsHashMap)).ToList();
+        
+        return authors
+            .Select(author => MapToAuthorResponse(author, likesHashMap, postsHashMap))
+            .Where(authorDto => authorDto.Posts != 0)
+            .ToList();
     }
 
 
@@ -44,12 +48,12 @@ public class AuthorService : IAuthorService
             .Where(ucr => ucr.Role == CommunityRole.Administrator)
             .Include(ucr => ucr.User)
             .ToListAsync();
-        
+
         var usersIds = users.Select(user => user.UserId).ToList();
         var usersWithoutDetails = await _db.Users
             .Where(user => usersIds.Contains(user.Id))
             .ToListAsync();
-        
+
         foreach (var user in usersWithoutDetails.Where(user => users.All(u => u.UserId != user.Id)))
         {
             users.Add(new UserCommunityRole

@@ -1,7 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 using BlogAPI.Configurations;
 using BlogAPI.Data;
-using BlogAPI.DTOs;
 using BlogAPI.Entities;
 using BlogAPI.Exceptions;
 using BlogAPI.Models;
@@ -62,10 +61,10 @@ public partial class AuthService : IAuthService
         return new OkResult();
     }
 
-    public RefreshResponse Refresh(UpdateRefreshDto updateRefreshDto)
+    public RefreshResponse Refresh(RefreshRequest refreshRequest)
     {
-        var userGuid = _jwtService.GetGuidFromRefreshToken(updateRefreshDto.RefreshToken);
-        _jwtService.ValidateRefreshToken(updateRefreshDto.RefreshToken);
+        var userGuid = _jwtService.GetGuidFromRefreshToken(refreshRequest.RefreshToken);
+        _jwtService.ValidateRefreshToken(refreshRequest.RefreshToken);
         var user = GetUserByGuid(userGuid);
         var accessToken = _jwtService.GenerateAccessToken(user);
         return new RefreshResponse { AccessToken = accessToken };
