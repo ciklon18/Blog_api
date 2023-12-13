@@ -113,10 +113,10 @@ public partial class PostService : IPostService
         if (pageSize < 1) throw new InvalidPaginationException("Invalid value for attribute pageSize");
     }
 
-    private async Task<List<Guid>> GetAuthorsByAuthorName(string? authorName)
+    private Task<List<Guid>> GetAuthorsByAuthorName(string? authorName)
     {
-        if (string.IsNullOrEmpty(authorName)) return await _db.Users.Select(x => x.Id).ToListAsync();
-        return await _db.Users.Where(x => x.FullName.Contains(authorName)).Select(x => x.Id).ToListAsync();
+        if (string.IsNullOrEmpty(authorName)) return _db.Users.Select(x => x.Id).ToListAsync();
+        return _db.Users.Where(x => x.FullName.Contains(authorName)).Select(x => x.Id).ToListAsync();
     }
 
 
@@ -301,7 +301,7 @@ public partial class PostService : IPostService
 
     private async Task CheckIsAddressExist(Guid? addressId)
     {
-        if (addressId == Guid.Empty) return;
+        if (addressId == null || addressId == Guid.Empty) return;
         var address = await _db.Addresses.FirstOrDefaultAsync(x => x.ObjectGuid == addressId);
         if (address != null) return;
         var housesAddress = await _db.HousesAddresses.FirstOrDefaultAsync(x => x.ObjectGuid == addressId);

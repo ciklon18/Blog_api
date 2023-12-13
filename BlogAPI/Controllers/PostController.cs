@@ -35,7 +35,7 @@ public class PostController : ControllerBase
             page, pageSize);
     }
 
-    [HttpPost]
+    [HttpPost()]
     public Task<IActionResult> CreatePost([FromBody] CreatePostDto createPostDto)
     {
         return _postService.CreateUserPost(createPostDto);
