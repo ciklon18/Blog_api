@@ -1,7 +1,5 @@
 ﻿using BlogAPI.Configurations;
-using BlogAPI.Entities;
 using BlogAPI.Exceptions;
-using Xunit.Sdk;
 
 namespace BlogAPI.Middlewares;
 
@@ -22,160 +20,117 @@ public class ExceptionMiddleware
         }
         catch (InvalidRefreshToken ex)
         {
-            context.Response.StatusCode = StatusCodes.Status400BadRequest;
-            await context.Response.WriteAsJsonAsync(new Error
-            {
-                Message = ex.Message,
-                StatusCode = context.Response.StatusCode
-            });
+            HandleException(context, ex, StatusCodes.Status400BadRequest);
+        }
+        catch (IncorrectRegisterDataException ex)
+        {
+            HandleException(context, ex, StatusCodes.Status400BadRequest);
         }
         catch (ForbiddenAccessToClosedCommunityException ex)
         {
-            context.Response.StatusCode = StatusCodes.Status403Forbidden;
-            await context.Response.WriteAsJsonAsync(new Error
-            {
-                Message = ex.Message,
-                StatusCode = context.Response.StatusCode
-            });
+            HandleException(context, ex, StatusCodes.Status403Forbidden);
         }
         catch (InvalidTokenException ex)
         {
-            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-            await context.Response.WriteAsJsonAsync(new Error
-            {
-                Message = ex.Message,
-                StatusCode = context.Response.StatusCode
-            });
+            HandleException(context, ex, StatusCodes.Status401Unauthorized);
         }
         catch (CommunityUserRoleNotFoundException ex)
         {
-            context.Response.StatusCode = StatusCodes.Status404NotFound;
-            await context.Response.WriteAsJsonAsync(new Error
-            {
-                Message = ex.Message,
-                StatusCode = context.Response.StatusCode
-            });
+            HandleException(context, ex, StatusCodes.Status404NotFound);
         }
         catch (UserCommunityRoleAlreadyExistsException ex)
         {
-            context.Response.StatusCode = StatusCodes.Status400BadRequest;
-            await context.Response.WriteAsJsonAsync(new Error
-            {
-                StatusCode = context.Response.StatusCode,
-                Message = ex.Message,
-            });
+            HandleException(context, ex, StatusCodes.Status400BadRequest);
         }
         catch (AddressElementNotFound ex)
         {
-            context.Response.StatusCode = StatusCodes.Status404NotFound;
-            await context.Response.WriteAsJsonAsync(new Error
-            {
-                Message = ex.Message,
-                StatusCode = context.Response.StatusCode
-            });
+            HandleException(context, ex, StatusCodes.Status404NotFound);
         }
         catch (CommunityNotFoundException ex)
         {
-            context.Response.StatusCode = StatusCodes.Status404NotFound;
-            await context.Response.WriteAsJsonAsync(new Error
-            {
-                Message = ex.Message,
-                StatusCode = context.Response.StatusCode
-            });
+            HandleException(context, ex, StatusCodes.Status404NotFound);
+        }
+        catch (PostNotFoundException ex)
+        {
+            HandleException(context, ex, StatusCodes.Status404NotFound);
         }
         catch (InvalidPaginationException ex)
         {
-            context.Response.StatusCode = StatusCodes.Status400BadRequest;
-            await context.Response.WriteAsJsonAsync(new Error
-            {
-                Message = ex.Message,
-                StatusCode = context.Response.StatusCode
-            });
+            HandleException(context, ex, StatusCodes.Status400BadRequest);
+        }
+        catch (IncorrectGenderException ex)
+        {
+            HandleException(context, ex, StatusCodes.Status400BadRequest);
         }
         catch (BadImageLinkException ex)
         {
-            context.Response.StatusCode = StatusCodes.Status400BadRequest;
-            await context.Response.WriteAsJsonAsync(new Error
-            {
-                Message = ex.Message,
-                StatusCode = context.Response.StatusCode
-            });
+            HandleException(context, ex, StatusCodes.Status400BadRequest);
         }
         catch (TagNotFoundException ex)
         {
-            context.Response.StatusCode = StatusCodes.Status400BadRequest;
-            await context.Response.WriteAsJsonAsync(new Error
-            {
-                Message = ex.Message,
-                StatusCode = context.Response.StatusCode
-            });
+            HandleException(context, ex, StatusCodes.Status400BadRequest);
         }
 
         catch (NullTokenException ex)
         {
-            context.Response.StatusCode = StatusCodes.Status400BadRequest;
-            await context.Response.WriteAsJsonAsync(new Error
-            {
-                Message = ex.Message,
-                StatusCode = context.Response.StatusCode
-            });
+            HandleException(context, ex, StatusCodes.Status400BadRequest);
         }
         catch (UserAlreadyExistsException ex)
         {
-            context.Response.StatusCode = StatusCodes.Status409Conflict;
-            await context.Response.WriteAsJsonAsync(new Error
-            {
-                Message = ex.Message,
-                StatusCode = context.Response.StatusCode
-            });
+            HandleException(context, ex, StatusCodes.Status409Conflict);
         }
         catch (UserNotFoundException ex)
         {
-            context.Response.StatusCode = StatusCodes.Status404NotFound;
-            await context.Response.WriteAsJsonAsync(new Error
-            {
-                Message = ex.Message,
-                StatusCode = context.Response.StatusCode
-            });
+            HandleException(context, ex, StatusCodes.Status404NotFound);
+        }
+        catch (ForbiddenWorkWithCommentException ex)
+        {
+            HandleException(context, ex, StatusCodes.Status403Forbidden);
+        }
+        catch(EmptyCommentException ex)
+        {
+            HandleException(context, ex, StatusCodes.Status400BadRequest);
+        }
+        catch (CommentNotFoundException ex)
+        {
+            HandleException(context, ex, StatusCodes.Status404NotFound);
         }
         catch (UserCommunityRoleNotFoundException ex)
         {
-            context.Response.StatusCode = StatusCodes.Status403Forbidden;
-            await context.Response.WriteAsJsonAsync(new Error
-            {
-                Message = ex.Message,
-                StatusCode = context.Response.StatusCode
-            });
+            HandleException(context, ex, StatusCodes.Status403Forbidden);
         }
         catch (IncorrectPhoneException ex)
         {
-            context.Response.StatusCode = StatusCodes.Status400BadRequest;
-            await context.Response.WriteAsJsonAsync(new Error
-            {
-                Message = ex.Message,
-                StatusCode = context.Response.StatusCode
-            });
+            HandleException(context, ex, StatusCodes.Status400BadRequest);
         }
         catch (UnauthorizedException ex)
         {
-            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-            await context.Response.WriteAsJsonAsync(new Error
-            {
-                Message = ex.Message,
-                StatusCode =  context.Response.StatusCode
-            });
+            HandleException(context, ex, StatusCodes.Status401Unauthorized);
+        }
+        catch (LikeNotFoundException ex)
+        {
+
+            HandleException(context, ex, StatusCodes.Status404NotFound);
+        }
+        catch (LikeAlreadyExistException ex)
+        {
+            HandleException(context, ex, StatusCodes.Status400BadRequest);
         }
         
         catch (Exception ex)
         {
-            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-            await context.Response.WriteAsJsonAsync(new Error
-            {
-                Message = ex.Message,
-                StatusCode =  context.Response.StatusCode
-            });
+            HandleException(context, ex, StatusCodes.Status500InternalServerError);
         }
         
-    } 
-    
+    }
+
+    private static void HandleException(HttpContext context, Exception exception, int statusCode)
+    {
+        context.Response.StatusCode = statusCode;
+        context.Response.WriteAsJsonAsync(new Error
+        {
+            Message = exception.Message,
+            StatusCode = context.Response.StatusCode
+        });
+    }
 }   

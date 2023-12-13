@@ -28,7 +28,6 @@
 
     <ItemGroup>
       <Compile Remove="Migrations\ApplicationDbContextModelSnapshot.cs" />
-      <Folder Include="DTOs\" />
       <Folder Include="Migrations\" />
     </ItemGroup>
     

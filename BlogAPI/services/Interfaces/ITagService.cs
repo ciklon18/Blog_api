@@ -1,8 +1,9 @@
-﻿using BlogAPI.Models.Response;
+﻿using BlogAPI.DTOs;
+using BlogAPI.Models.Response;
 
 namespace BlogAPI.services.Interfaces;
 
 public interface ITagService
 {
-    Task<List<TagResponse>> GetTags();
+    Task<List<TagDto>> GetTags();
 }

@@ -1,4 +1,4 @@
-﻿using BlogAPI.Models.Response;
+﻿using BlogAPI.Models;
 using BlogAPI.services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -6,7 +6,7 @@ namespace BlogAPI.controllers;
 
 [ApiController]
 [Route("api/address")]
-public class AddressController
+public class AddressController : ControllerBase
 {
     private readonly IAddressService _addressService;
     
@@ -16,14 +16,14 @@ public class AddressController
     }
     
     [HttpGet("search")]
-    public List<SearchAddressResponse> Search([FromQuery] int parentObjectId, [FromQuery] string? query)
+    public List<SearchAddressModel> Search([FromQuery] int parentObjectId, [FromQuery] string? query)
     {
         var searchResponse =  _addressService.Search(parentObjectId, query);
         return searchResponse;
     }
     
     [HttpGet("chain")]
-    public List<ChainAddressResponse> Chain([FromQuery] Guid objectGuid)
+    public List<SearchAddressModel> Chain([FromQuery] Guid objectGuid)
     {
         var chainResponse = _addressService.Chain(objectGuid);
         return chainResponse;

@@ -1,4 +1,4 @@
-﻿using BlogAPI.Entities;
+﻿using BlogAPI.DTOs;
 using BlogAPI.Enums;
 using BlogAPI.Models.Request;
 using BlogAPI.Models.Response;
@@ -10,7 +10,7 @@ namespace BlogAPI.controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class CommunityController
+public class CommunityController : ControllerBase
 {
     private readonly ICommunityService _communityService;
     public CommunityController(ICommunityService communityService)
@@ -18,58 +18,57 @@ public class CommunityController
         _communityService = communityService;
     }
 
-    [HttpGet()]
-    public async Task<List<CommunityResponse>> GetCommunityList()
+    [HttpGet]
+    public Task<List<CommunityDto>> GetCommunityList()
     {
-        return await _communityService.GetCommunityList();
+        return _communityService.GetCommunityList();
     }
 
     [HttpGet("my"), Authorize]
-    public async Task<List<CommunityUserResponse>> GetMyCommunityList()
+    public Task<List<CommunityUserDto>> GetMyCommunityList()
     {
-        return await _communityService.GetMyCommunityList();
+        return _communityService.GetMyCommunityList();
     }
 
     [HttpGet("{id}")]
-    public async Task<CommunityFullResponse> GetCommunityInfo([FromRoute] Guid id)
+    public Task<CommunityFullDto> GetCommunityInfo([FromRoute] Guid id)
     {
-        return await _communityService.GetCommunityInfo(id);
+        return _communityService.GetCommunityInfo(id);
     }
 
     [HttpGet("{id}/post"), Authorize]
-    public async Task<PostPagedListResponse> GetCommunityPosts( 
+    public Task<PostPagedListDto> GetCommunityPosts( 
         [FromRoute] Guid id,
         [FromQuery(Name = "tags")] List<Guid> tagIds,
         [FromQuery] PostSorting sort,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 5)
     {
-        return await _communityService.GetCommunityPosts(id, tagIds, sort, page, pageSize);
+        return _communityService.GetCommunityPosts(id, tagIds, sort, page, pageSize);
     }
 
     [HttpPost("{id}/post"), Authorize]
-    public Task<IActionResult> PostCommunityPost([FromRoute] Guid id, [FromBody] PostRequest postRequest)
+    public Task<IActionResult> PostCommunityPost([FromRoute] Guid id, [FromBody] CreatePostDto createPostDto)
     {
-        return _communityService.PostCommunityPost(id, postRequest);
+        return _communityService.PostCommunityPost(id, createPostDto);
     }
 
     [HttpGet("{id}/role"), Authorize]
-    public async Task<OkObjectResult> GetCommunityUserRole([FromRoute] Guid id)
+    public Task<OkObjectResult> GetCommunityUserRole([FromRoute] Guid id)
     {
-        var userRole = await _communityService.GetCommunityUserRole(id);
-        return userRole;
+        return _communityService.GetCommunityUserRole(id);
     }
 
     [HttpPost("{id}/subscribe"), Authorize]
-    public async Task<IActionResult> SubscribeUserToCommunity([FromRoute] Guid id)
+    public Task<IActionResult> SubscribeUserToCommunity([FromRoute] Guid id)
     {
-        return await _communityService.SubscribeUserToCommunity(id);
+        return _communityService.SubscribeUserToCommunity(id);
     }
 
     [HttpDelete("{id}/unsubscribe"), Authorize]
-    public async Task<IActionResult> UnsubscribeUserFromCommunity([FromRoute] Guid id)
+    public Task<IActionResult> UnsubscribeUserFromCommunity([FromRoute] Guid id)
     {
-        return await _communityService.UnsubscribeUserToCommunity(id);
+        return _communityService.UnsubscribeUserToCommunity(id);
     }
 
 }

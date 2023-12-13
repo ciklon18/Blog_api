@@ -1,5 +1,8 @@
-﻿namespace BlogAPI.Enums;
+﻿using System.Text.Json.Serialization;
 
+namespace BlogAPI.Enums;
+
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum ObjectLevel
 {
     Region,
@@ -18,6 +21,7 @@ public enum ObjectLevel
     IntracityLevel,
     AdditionalTerritoriesLevel,
     LevelOfObjectsInAdditionalTerritories,
-    CarPlace
+    CarPlace,
+    Empty
     
 }

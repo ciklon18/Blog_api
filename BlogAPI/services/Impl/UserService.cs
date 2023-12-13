@@ -1,12 +1,9 @@
-﻿using System.Security.Authentication;
-using System.Security.Claims;
-using BlogAPI.Configurations;
-using BlogAPI.Data;
+﻿using BlogAPI.Data;
+using BlogAPI.DTOs;
 using BlogAPI.Entities;
 using BlogAPI.Enums;
 using BlogAPI.Exceptions;
-using BlogAPI.Models.Request;
-using BlogAPI.Models.Response;
+using BlogAPI.Models;
 using BlogAPI.services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -15,105 +12,108 @@ namespace BlogAPI.services.Impl;
 
 public class UserService : IUserService
 {
-    private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly ApplicationDbContext _db;
     private readonly IJwtService _jwtService;
 
-    public UserService(IHttpContextAccessor httpContextAccessor, ApplicationDbContext db, IJwtService jwtService)
+    public UserService(ApplicationDbContext db, IJwtService jwtService)
     {
-        _httpContextAccessor = httpContextAccessor;
         _db = db;
         _jwtService = jwtService;
     }
 
-    public async Task<UserProfileResponse> GetUserProfileAsync()
+    public async Task<UserDto> GetUserProfileAsync()
     {
-        var userEmail = GetUserEmail();
-        if (userEmail == null) throw new UserNotFoundException("User not found");
-        await CheckIsRefreshTokenValid(userEmail);
-        var user = await GetUserByEmailAsync(userEmail);
+        var userId = await GetUserGuid();
+        await CheckIsRefreshTokenValid(userId);
+        var user = await GetUserByGuidAsync(userId);
         return EntityUserToUserDto(user);
     }
 
 
-
-
-    public async Task<IActionResult> UpdateUserProfileAsync(UserEditRequest userEditRequest)
+    public async Task<IActionResult> UpdateUserProfileAsync(UserEditModel userEditModel)
     {
-        await CheckIsEmailInUseAsync(userEditRequest.Email);
-        var userEmail = GetUserEmail();
-        await CheckIsRefreshTokenValid(userEmail);
-        await UpdateRefreshToken(userEmail);
+        
+        var userGuid = await GetUserGuid();
+        
+        await CheckIsEmailInUseAsync(userEditModel.Email, userGuid);
+        await CheckIsRefreshTokenValid(userGuid);
 
-        var user = await GetUserByEmailAsync(userEmail);
+        var user = await GetUserByGuidAsync(userGuid);
+        var updatedUser = GetUpdatedUser(user, userEditModel);
+        
         _db.Users.Remove(user);
-        var updatedUser = GetUpdatedUser(user, userEditRequest);
         _db.Users.Add(updatedUser);
-
+        
         await _db.SaveChangesAsync();
+        
 
         return new OkResult();
     }
+    
 
-    private async Task UpdateRefreshToken(string userEmail)
+    private async Task<Guid> GetUserGuid()
     {
-        var refreshToken = await _jwtService.GetRefreshTokenByEmailAsync(userEmail);
-        if (refreshToken == null) throw new InvalidRefreshToken("Refresh token not found");
-        await _jwtService.RemoveRefreshTokenAsync(refreshToken);
-        await _jwtService.SaveRefreshTokenAsync(refreshToken, userEmail);
+        var userId = await _jwtService.GetUserGuidFromTokenAsync();
+        if (userId == Guid.Empty) throw new UserNotFoundException("User not found");
+        return userId;
     }
 
 
-    private string GetUserEmail()
+    private async Task<User> GetUserByGuidAsync(Guid userId )
     {
-        var userEmail = _httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.Email);
-        if (userEmail == null) throw new UserNotFoundException("User not found");
-        return userEmail;
-    }
-
-    private async Task<User> GetUserByEmailAsync(string email)
-    {
-        var user = await _db.Users.SingleOrDefaultAsync(u => u.Email == email);
+        var user = await _db.Users.SingleOrDefaultAsync(u => u.Id == userId);
         if (user == null) throw new UserNotFoundException("User not found");
         return user;
     }
-    private async Task CheckIsRefreshTokenValid(string email)
+
+    private async Task CheckIsRefreshTokenValid(Guid userId)
     {
-        var isEmailUsed = await _db.RefreshTokens.AnyAsync(u => u.Email == email);
-        if (!isEmailUsed) throw new UnauthorizedException("Refresh token is not valid");
+        var isGuidUsed = await _db.RefreshTokens.AnyAsync(u => u.UserId == userId);
+        if (!isGuidUsed) throw new UnauthorizedException("Refresh token is not valid");
     }
 
-    private static UserProfileResponse EntityUserToUserDto(User user)
+    private static UserDto EntityUserToUserDto(User user)
     {
-        return new UserProfileResponse
+        return new UserDto
         {
-            Id = user.Id.ToString(),
-            CreateTime = user.CreatedAt.ToString(EntityConstants.DateTimeFormat),
+            Id = user.Id,
+            CreateTime = user.CreatedAt.ToUniversalTime(),
             FullName = user.FullName,
-            BirthDate = user.BirthDate.ToString(EntityConstants.DateTimeFormat),
-            Gender = user.Gender ?? Gender.Male.ToString(),
+            BirthDate = user.BirthDate.ToUniversalTime(),
+            Gender = user.Gender,
             Email = user.Email,
             PhoneNumber = user.Phone ?? string.Empty
         };
     }
 
-    private static User GetUpdatedUser(User user, UserEditRequest userEditRequest)
+    private static User GetUpdatedUser(User user, UserEditModel userEditModel)
     {
         return new User
         {
-            Email = userEditRequest.Email,
-            FullName = userEditRequest.FullName,
-            BirthDate = DateTime.Parse(userEditRequest.BirthDate).ToUniversalTime(),
-            Gender = userEditRequest.Gender,
-            Phone = userEditRequest.PhoneNumber,
+            Id = user.Id,
+            Email = userEditModel.Email != "" ? userEditModel.Email : user.Email,
+            FullName = userEditModel.FullName != "" ? userEditModel.FullName : user.FullName,
+            BirthDate = DateTime.Parse(userEditModel.BirthDate).ToUniversalTime(),
+            Gender = ConvertStringToGender(userEditModel.Gender),
+            Phone = userEditModel.PhoneNumber != "" ? userEditModel.PhoneNumber : user.Phone,
             CreatedAt = user.CreatedAt,
             Password = user.Password,
         };
     }
 
-    private async Task CheckIsEmailInUseAsync(string email)
+    private static Gender ConvertStringToGender(string gender)
     {
-        var isEmailUsed = await _db.Users.AnyAsync(u => u.Email == email);
+        return gender switch
+        {
+            "Male" => Gender.Male,
+            "Female" => Gender.Female,
+            _ => throw new IncorrectGenderException("Gender is incorrect")
+        };
+    }
+
+    private async Task CheckIsEmailInUseAsync(string email, Guid userId)
+    {
+        var isEmailUsed = await _db.Users.AnyAsync(u => u.Email == email && u.Id != userId);
         if (isEmailUsed) throw new UserAlreadyExistsException("Email is already in use");
     }
 }

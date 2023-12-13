@@ -25,8 +25,6 @@ public class RefreshToken
     [Column("revoked")]
     public bool Revoked { get; set; }
     
-    [Column("email")]
-    public required string Email { get; set; }
-    
-    
+    [Column("userId")]
+    public required Guid UserId { get; set; }
 }
