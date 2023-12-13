@@ -22,6 +22,10 @@ public class ExceptionMiddleware
         {
             HandleException(context, ex, StatusCodes.Status400BadRequest);
         }
+        catch (IncorrectRegisterDataException ex)
+        {
+            HandleException(context, ex, StatusCodes.Status400BadRequest);
+        }
         catch (ForbiddenAccessToClosedCommunityException ex)
         {
             HandleException(context, ex, StatusCodes.Status403Forbidden);

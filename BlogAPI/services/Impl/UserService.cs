@@ -4,6 +4,7 @@ using BlogAPI.DTOs;
 using BlogAPI.Entities;
 using BlogAPI.Enums;
 using BlogAPI.Exceptions;
+using BlogAPI.Models;
 using BlogAPI.Models.Request;
 using BlogAPI.Models.Response;
 using BlogAPI.services.Interfaces;
@@ -32,14 +33,14 @@ public class UserService : IUserService
     }
 
 
-    public async Task<IActionResult> UpdateUserProfileAsync(UserEditRequest userEditRequest)
+    public async Task<IActionResult> UpdateUserProfileAsync(UserEditModel userEditModel)
     {
-        await CheckIsEmailInUseAsync(userEditRequest.Email);
+        await CheckIsEmailInUseAsync(userEditModel.Email);
         var userGuid = await GetUserGuid();
         await CheckIsRefreshTokenValid(userGuid);
 
         var user = await GetUserByGuidAsync(userGuid);
-        var updatedUser = GetUpdatedUser(user, userEditRequest);
+        var updatedUser = GetUpdatedUser(user, userEditModel);
         
         _db.Users.Update(updatedUser);
         await _db.SaveChangesAsync();
@@ -84,15 +85,15 @@ public class UserService : IUserService
         };
     }
 
-    private static User GetUpdatedUser(User user, UserEditRequest userEditRequest)
+    private static User GetUpdatedUser(User user, UserEditModel userEditModel)
     {
         return new User
         {
-            Email = userEditRequest.Email != "" ? userEditRequest.Email : user.Email,
-            FullName = userEditRequest.FullName != "" ? userEditRequest.FullName : user.FullName,
-            BirthDate = DateTime.Parse(userEditRequest.BirthDate).ToUniversalTime(),
-            Gender = ConvertStringToGender(userEditRequest.Gender),
-            Phone = userEditRequest.PhoneNumber != "" ? userEditRequest.PhoneNumber : user.Phone,
+            Email = userEditModel.Email != "" ? userEditModel.Email : user.Email,
+            FullName = userEditModel.FullName != "" ? userEditModel.FullName : user.FullName,
+            BirthDate = DateTime.Parse(userEditModel.BirthDate).ToUniversalTime(),
+            Gender = ConvertStringToGender(userEditModel.Gender),
+            Phone = userEditModel.PhoneNumber != "" ? userEditModel.PhoneNumber : user.Phone,
             CreatedAt = user.CreatedAt,
             Password = user.Password,
         };

@@ -83,18 +83,18 @@ public partial class PostService : IPostService
     }
 
 
-    public async Task<IActionResult> CreateUserPost(PostRequest postRequest)
+    public async Task<IActionResult> CreateUserPost(CreatePostDto createPostDto)
     {
-        var post = await GetConvertedPostFromPostRequest(postRequest, Guid.Empty, string.Empty);
+        var post = await GetConvertedPostFromPostRequest(createPostDto, Guid.Empty, string.Empty);
         await _db.Posts.AddAsync(post);
         await _db.SaveChangesAsync();
         return new OkResult();
     }
 
     public async Task<IActionResult> CreateCommunityPost(Guid communityId, string? communityName,
-        PostRequest postRequest)
+        CreatePostDto createPostDto)
     {
-        var post = await GetConvertedPostFromPostRequest(postRequest, communityId, communityName);
+        var post = await GetConvertedPostFromPostRequest(createPostDto, communityId, communityName);
         await _db.Posts.AddAsync(post);
         await _db.SaveChangesAsync();
         return new OkResult();
@@ -229,20 +229,20 @@ public partial class PostService : IPostService
             .FirstOrDefaultAsync();
     }
 
-    private async Task<Post> GetConvertedPostFromPostRequest(PostRequest postRequest, Guid communityId,
+    private async Task<Post> GetConvertedPostFromPostRequest(CreatePostDto createPostDto, Guid communityId,
         string? communityName)
     {
         var userId = await GetUserGuidFromToken();
 
-        await CheckAreTagsExist(postRequest.Tags);
-        await CheckIsAddressExist(postRequest.AddressId);
-        CheckIsImageValid(postRequest.Image);
+        await CheckAreTagsExist(createPostDto.Tags);
+        await CheckIsAddressExist(createPostDto.AddressId);
+        CheckIsImageValid(createPostDto.Image);
 
         var userName = await GetUserNameWithUserId(userId);
         var postGuid = Guid.NewGuid();
-        var postTags = ConvertTagsToPostTags(postRequest.Tags, postGuid);
+        var postTags = ConvertTagsToPostTags(createPostDto.Tags, postGuid);
 
-        return ConvertPostRequestToPost(postRequest, userId, userName, communityId, communityName, likes: 0,
+        return ConvertPostRequestToPost(createPostDto, userId, userName, communityId, communityName, likes: 0,
             hasLike: false, commentsCount: 0, postTags, postGuid);
     }
 
@@ -281,7 +281,7 @@ public partial class PostService : IPostService
         }).ToList();
     }
 
-    private static Post ConvertPostRequestToPost(PostRequest postRequest, Guid userId, string? userName,
+    private static Post ConvertPostRequestToPost(CreatePostDto createPostDto, Guid userId, string? userName,
         Guid communityId,
         string? communityName, int likes, bool hasLike, int commentsCount, ICollection<PostTag>? tags, Guid postGuid)
     {
@@ -289,15 +289,15 @@ public partial class PostService : IPostService
         {
             Id = postGuid,
             CreateTime = DateTime.Now.ToUniversalTime(),
-            Title = postRequest.Title,
-            Description = postRequest.Description,
-            ReadingTime = postRequest.ReadingTime,
-            Image = postRequest.Image,
+            Title = createPostDto.Title,
+            Description = createPostDto.Description,
+            ReadingTime = createPostDto.ReadingTime,
+            Image = createPostDto.Image,
             AuthorId = userId,
             Author = userName ?? "",
             CommunityId = communityId,
             CommunityName = communityName ?? "",
-            AddressId = postRequest.AddressId ?? Guid.Empty,
+            AddressId = createPostDto.AddressId ?? Guid.Empty,
             Likes = likes,
             HasLike = hasLike,
             CommentsCount = commentsCount,

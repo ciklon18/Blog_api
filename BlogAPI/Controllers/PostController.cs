@@ -1,7 +1,6 @@
 ﻿using BlogAPI.DTOs;
 using BlogAPI.Enums;
 using BlogAPI.Models.Request;
-using BlogAPI.Models.Response;
 using BlogAPI.services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -21,7 +20,7 @@ public class PostController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<PostPagedListDto> GetPost(
+    public Task<PostPagedListDto> GetPost(
         [FromQuery(Name = "tags")] List<Guid> tagIds,
         [FromQuery] string? authorName,
         [FromQuery] int minReadingTime,
@@ -32,31 +31,31 @@ public class PostController : ControllerBase
         [FromQuery] int pageSize = 5
     )
     {
-        return await _postService.GetPosts(tagIds, authorName, minReadingTime, maxReadingTime, sort, isOnlyMyCommunities,
+        return _postService.GetPosts(tagIds, authorName, minReadingTime, maxReadingTime, sort, isOnlyMyCommunities,
             page, pageSize);
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreatePost([FromBody] PostRequest postRequest)
+    public Task<IActionResult> CreatePost([FromBody] CreatePostDto createPostDto)
     {
-        return await _postService.CreateUserPost(postRequest);
+        return _postService.CreateUserPost(createPostDto);
     }
 	
     [HttpGet("{id}")]
-    public async Task<PostFullDto> GetPostById([FromRoute] Guid id)
+    public Task<PostFullDto> GetPostById([FromRoute] Guid id)
     {
-        return await _postService.GetPostById(id);
+        return _postService.GetPostById(id);
     }
 
-    [HttpPost("{id}/like")]
-    public async Task<IActionResult> LikePost([FromRoute] Guid id)
+    [HttpPost("{postId}/like")]
+    public Task<IActionResult> LikePost([FromRoute] Guid postId)
     {
-        return await _postService.LikePost(id);
+        return _postService.LikePost(postId);
     }
 
-    [HttpDelete("{id}/like")]
-    public async Task<IActionResult> UnlikePost([FromRoute] Guid id)
+    [HttpDelete("{postId}/like")]
+    public Task<IActionResult> UnlikePost([FromRoute] Guid postId)
     {
-        return await _postService.UnlikePost(id);
+        return _postService.UnlikePost(postId);
     }
 }

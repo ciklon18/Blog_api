@@ -91,9 +91,9 @@ public class CommunityService : ICommunityService
         if (pageSize < 1) throw new InvalidPaginationException("Invalid value for attribute pageSize");
     }
 
-    private async Task<bool> IsCommunityClosed(Guid communityId)
+    private Task<bool> IsCommunityClosed(Guid communityId)
     {
-        return await _db.Communities.Where(x => x.Id == communityId).Select(x => x.IsClosed).FirstOrDefaultAsync();
+        return _db.Communities.Where(x => x.Id == communityId).Select(x => x.IsClosed).FirstOrDefaultAsync();
     }
 
     private async Task CheckIsUserSubscribedToCommunity(Guid communityId, Guid userId)
@@ -115,9 +115,9 @@ public class CommunityService : ICommunityService
     }
 
 
-    private async Task<string?> GetCommunityNameWithCommunityId(Guid communityId)
+    private Task<string?> GetCommunityNameWithCommunityId(Guid communityId)
     {
-        return await _db.Communities
+        return _db.Communities
             .Where(x => x.Id == communityId)
             .Select(x => x.Name)
             .FirstOrDefaultAsync();
@@ -230,20 +230,20 @@ public class CommunityService : ICommunityService
     }
 
 
-    private async Task<List<Guid>> GetCommunityAdminIds(Guid communityId)
+    private Task<List<Guid>> GetCommunityAdminIds(Guid communityId)
     {
-        return await _db.UserCommunityRoles
+        return _db.UserCommunityRoles
             .Where(x => x.CommunityId == communityId && x.Role == CommunityRole.Administrator)
             .Select(x => x.UserId)
             .ToListAsync();
     }
 
-    public async Task<IActionResult> PostCommunityPost(Guid communityId, PostRequest postRequest)
+    public async Task<IActionResult> PostCommunityPost(Guid communityId, CreatePostDto createPostDto)
     {
         var userId = await _jwtService.GetUserGuidFromTokenAsync();
         await CheckIsUserCommunityAdministrator(userId, communityId);
         var communityName = await GetCommunityNameWithCommunityId(communityId);
 
-        return await _postService.CreateCommunityPost(communityId, communityName, postRequest);
+        return await _postService.CreateCommunityPost(communityId, communityName, createPostDto);
     }
 }

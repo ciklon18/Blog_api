@@ -1,6 +1,10 @@
-﻿using BlogAPI.Data;
+﻿using System.Text.RegularExpressions;
+using BlogAPI.Configurations;
+using BlogAPI.Data;
+using BlogAPI.DTOs;
 using BlogAPI.Entities;
 using BlogAPI.Exceptions;
+using BlogAPI.Models;
 using BlogAPI.Models.Request;
 using BlogAPI.Models.Response;
 using BlogAPI.services.Interfaces;
@@ -9,7 +13,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BlogAPI.services.Impl;
 
-public class AuthService : IAuthService
+public partial class AuthService : IAuthService
 {
     private readonly ApplicationDbContext _db;
     private readonly IJwtService _jwtService;
@@ -21,20 +25,22 @@ public class AuthService : IAuthService
     }
 
 
-    public async Task<RegistrationResponse> Register(RegisterRequest registerRequest)
+    public async Task<RegistrationResponse> Register(UserRegisterModel userRegisterModel)
     {
-        await IsUserUnique(registerRequest.Email);
-        var newUser = CreateHashUser(registerRequest);
+        await IsUserUnique(userRegisterModel.Email);
+        await ValidateRegisterData(userRegisterModel);
+        var newUser = CreateHashUser(userRegisterModel);
         await _db.Users.AddAsync(newUser);
         await _db.SaveChangesAsync();
         return new RegistrationResponse { Email = newUser.Email, FullName = newUser.FullName };
     }
 
 
-    public async Task<LoginResponse> Login(LoginRequest loginRequest)
+
+    public async Task<LoginResponse> Login(UserLoginModel userLoginModel)
     {
-        var user = await GetUserByEmailAsync(loginRequest.Email);
-        CheckIsValidPassword(loginRequest.Password, user.Password);
+        var user = await GetUserByEmailAsync(userLoginModel.Email);
+        CheckIsValidPassword(userLoginModel.Password, user.Password);
         var existingRefreshToken = await _jwtService.GetRefreshTokenByGuidAsync(user.Id);
         var accessToken = _jwtService.GenerateAccessToken(user);
         
@@ -56,10 +62,10 @@ public class AuthService : IAuthService
         return new OkResult();
     }
 
-    public RefreshResponse Refresh(RefreshRequest refreshRequest)
+    public RefreshResponse Refresh(UpdateRefreshDto updateRefreshDto)
     {
-        var userGuid = _jwtService.GetGuidFromRefreshToken(refreshRequest.RefreshToken);
-        _jwtService.ValidateRefreshToken(refreshRequest.RefreshToken);
+        var userGuid = _jwtService.GetGuidFromRefreshToken(updateRefreshDto.RefreshToken);
+        _jwtService.ValidateRefreshToken(updateRefreshDto.RefreshToken);
         var user = GetUserByGuid(userGuid);
         var accessToken = _jwtService.GenerateAccessToken(user);
         return new RefreshResponse { AccessToken = accessToken };
@@ -96,20 +102,50 @@ public class AuthService : IAuthService
     }
 
 
-    private static User CreateHashUser(RegisterRequest registerRequest)
+    private static User CreateHashUser(UserRegisterModel userRegisterModel)
     {
-        var passwordHash = BCrypt.Net.BCrypt.HashPassword(registerRequest.Password);
+        var passwordHash = BCrypt.Net.BCrypt.HashPassword(userRegisterModel.Password);
         return new User
         {
-            FullName = registerRequest.FullName,
-            Phone = registerRequest.PhoneNumber,
+            FullName = userRegisterModel.FullName,
+            Phone = userRegisterModel.PhoneNumber,
             Password = passwordHash,
-            BirthDate = registerRequest.BirthDate.ToUniversalTime(),
-            Email = registerRequest.Email,
-            Gender = registerRequest.Gender,
+            BirthDate = userRegisterModel.BirthDate.ToUniversalTime(),
+            Email = userRegisterModel.Email,
+            Gender = userRegisterModel.Gender,
             Id = Guid.NewGuid(),
             CreatedAt = DateTime.UtcNow.ToUniversalTime()
         };
     }
+    
+    private static Task ValidateRegisterData(UserRegisterModel userRegisterModel)
+    {
+        if (userRegisterModel.PhoneNumber != null && !PhoneNumberRegex().IsMatch(userRegisterModel.PhoneNumber))
+        {
+            throw new IncorrectPhoneException(EntityConstants.IncorrectPhoneNumberError);
+        }
+        if (!PasswordRegex().IsMatch(userRegisterModel.Password))
+        {
+            throw new IncorrectRegisterDataException(EntityConstants.IncorrectPassword);
+        }
 
+        if (!EmailRegex().IsMatch(userRegisterModel.Email))
+        {
+            throw new IncorrectRegisterDataException(EntityConstants.IncorrectEmailError);
+        }
+
+        return Task.CompletedTask;
+    }
+    
+    
+
+
+    
+    [GeneratedRegex(pattern: EntityConstants.PhoneNumberRegex)]
+    private static partial Regex PhoneNumberRegex();
+    
+    [GeneratedRegex(pattern: EntityConstants.EmailRegex)]
+    private static partial Regex EmailRegex();    
+    [GeneratedRegex(pattern: EntityConstants.PasswordRegex)]
+    private static partial Regex PasswordRegex();
 }

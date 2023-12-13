@@ -12,7 +12,7 @@ public interface ICommunityService
     Task<List<CommunityUserDto>> GetMyCommunityList();
     Task<CommunityFullDto> GetCommunityInfo(Guid id);
     Task<PostPagedListDto> GetCommunityPosts(Guid communityId, List<Guid> tagIds, PostSorting sort, int page, int pageSize);
-    Task<IActionResult> PostCommunityPost(Guid communityId, PostRequest postRequest);
+    Task<IActionResult> PostCommunityPost(Guid communityId, CreatePostDto createPostDto);
     Task<OkObjectResult> GetCommunityUserRole(Guid id);
     Task<IActionResult> SubscribeUserToCommunity(Guid communityId);
     Task<IActionResult> UnsubscribeUserToCommunity(Guid id);

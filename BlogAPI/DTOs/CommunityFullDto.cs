@@ -1,7 +1,4 @@
-﻿
-using BlogAPI.Models;
-
-namespace BlogAPI.DTOs;
+﻿namespace BlogAPI.DTOs;
 public record CommunityFullDto(Guid Id, DateTime CreateTime, string Name, string Description, bool IsClosed,
     int SubscribersCount, IEnumerable<UserDto> Administrators)
 {

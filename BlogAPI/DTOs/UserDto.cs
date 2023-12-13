@@ -1,7 +1,5 @@
 ﻿using BlogAPI.Enums;
-
 namespace BlogAPI.DTOs;
-
 
 public record UserDto(
     Guid Id,

@@ -1,9 +1,7 @@
 ﻿
 using BlogAPI.DTOs;
-using BlogAPI.Entities;
 using BlogAPI.Models;
 using BlogAPI.Models.Request;
-using BlogAPI.Models.Response;
 using BlogAPI.services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -29,33 +27,33 @@ public class UsersController : ControllerBase
     
     
     [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] RegisterRequest registerRequest)
+    public async Task<IActionResult> Register([FromBody] UserRegisterModel userRegisterModel)
     {
-        var newUser = await _authService.Register(registerRequest);
+        var newUser = await _authService.Register(userRegisterModel);
         return Ok(newUser);
     }
 
     
     [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginRequest loginRequest)
+    public async Task<IActionResult> Login([FromBody] UserLoginModel userLoginModel)
     {
-        var loginResponse = await _authService.Login(loginRequest);
+        var loginResponse = await _authService.Login(userLoginModel);
         return Ok(loginResponse);
     }
 
 
     [HttpPost("logout"), Authorize]
-    public async Task<IActionResult> Logout()
+    public Task<IActionResult> Logout()
     {
-        return await _authService.Logout();
+        return _authService.Logout();
     }
     
     
     [HttpPost("refresh")]
-    public IActionResult Refresh([FromBody] RefreshRequest refreshRequest)
+    public IActionResult Refresh([FromBody] UpdateRefreshDto updateRefreshDto)
     {
         
-        var refreshResponse = _authService.Refresh(refreshRequest);
+        var refreshResponse = _authService.Refresh(updateRefreshDto);
         return Ok(refreshResponse);
     }
     
@@ -69,9 +67,9 @@ public class UsersController : ControllerBase
     
     
     [HttpPut("profile"), Authorize]
-    public async Task<IActionResult> EditProfile([FromBody] UserEditRequest userEditRequest)
+    public async Task<IActionResult> EditProfile([FromBody] UserEditModel userEditModel)
     {
-        await _userService.UpdateUserProfileAsync(userEditRequest);
+        await _userService.UpdateUserProfileAsync(userEditModel);
         return Ok(new { message = "Profile updated successfully" });
     }
 }

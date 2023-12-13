@@ -1,5 +1,4 @@
 ﻿using BlogAPI.DTOs;
-using BlogAPI.Models.Response;
 using BlogAPI.services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,8 +14,8 @@ public class TagController : ControllerBase
         _tagService = tagService;
     }
     [HttpGet]
-    public async Task<List<TagDto>> GetTags()
+    public Task<List<TagDto>> GetTags()
     {
-        return await _tagService.GetTags();
+        return _tagService.GetTags();
     }
 }

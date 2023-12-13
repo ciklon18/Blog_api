@@ -53,32 +53,32 @@ public class CommentService : ICommentService
         };
     }
 
-    public async Task<IActionResult> CreateComment(Guid postId, CreateCommentRequest request)
+    public async Task<IActionResult> CreateComment(Guid postId, CreateCommentDto dto)
     {
-        CheckIsCommentEmpty(request.Content);
-        if (request.ParentId != null && request.ParentId != Guid.Empty)
+        CheckIsCommentEmpty(dto.Content);
+        if (dto.ParentId != null && dto.ParentId != Guid.Empty)
         {
-            await CheckIsThereParentComment(request.ParentId);
-            await UpdateSubCommentsCount(request.ParentId);
+            await CheckIsThereParentComment(dto.ParentId);
+            await UpdateSubCommentsCount(dto.ParentId);
         }
         var userId = await _jwtService.GetUserGuidFromTokenAsync();
         var author = await GetUserDtoByGuid(userId);
-        var comment = ConvertRequestToComment(request, author.FullName, author.Id, postId);
+        var comment = ConvertRequestToComment(dto, author.FullName, author.Id, postId);
         _db.Comments.Add(comment);
         await _db.SaveChangesAsync();
         return new OkResult();
     }
 
 
-    public async Task<IActionResult> EditComment(Guid commentId, UpdateCommentRequest request)
+    public async Task<IActionResult> EditComment(Guid commentId, UpdateCommentDto dto)
     {
-        CheckIsCommentEmpty(request.Content);
+        CheckIsCommentEmpty(dto.Content);
         var userId = await _jwtService.GetUserGuidFromTokenAsync();
         var comment = await _db.Comments.FirstOrDefaultAsync(x => x.Id == commentId);
         if (comment is not { DeleteDate: null }) throw new CommentNotFoundException("Comment not found");
         if (comment.AuthorId != userId)
             throw new ForbiddenWorkWithCommentException("You are not the author of this comment");
-        comment.Content = request.Content;
+        comment.Content = dto.Content;
         comment.ModifiedDate = DateTime.Now.ToUniversalTime();
         _db.Comments.Update(comment);
         await _db.SaveChangesAsync();
@@ -137,18 +137,18 @@ public class CommentService : ICommentService
         await _db.SaveChangesAsync();
     }
 
-    private static Comment ConvertRequestToComment(CreateCommentRequest request, string authorName, Guid authorId, Guid postId)
+    private static Comment ConvertRequestToComment(CreateCommentDto dto, string authorName, Guid authorId, Guid postId)
     {
         return new Comment
         {
             Id = Guid.NewGuid(),
-            Content = request.Content,
+            Content = dto.Content,
             Author = authorName,
             AuthorId = authorId,
             CreateTime = DateTime.Now.ToUniversalTime(),
             DeleteDate = null,
             ModifiedDate = null,
-            ParentId = request.ParentId,
+            ParentId = dto.ParentId,
             PostId = postId,
             SubComments = 0,
         };
