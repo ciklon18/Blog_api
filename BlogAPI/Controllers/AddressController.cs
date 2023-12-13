@@ -1,5 +1,4 @@
 ﻿using BlogAPI.Models;
-using BlogAPI.Models.Response;
 using BlogAPI.services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,7 +16,7 @@ public class AddressController : ControllerBase
     }
     
     [HttpGet("search")]
-    public List<SearchAddressResponse> Search([FromQuery] int parentObjectId, [FromQuery] string? query)
+    public List<SearchAddressModel> Search([FromQuery] int parentObjectId, [FromQuery] string? query)
     {
         var searchResponse =  _addressService.Search(parentObjectId, query);
         return searchResponse;
