@@ -14,9 +14,9 @@ public class TagService : ITagService
         _db = db;
     }
     
-    public async Task<List<TagResponse>> GetTags()
+    public async Task<List<TagDto>> GetTags()
     {
-        return await _db.Tags.Select(x => new TagResponse(x.Id, x.CreateTime, x.Name)).ToListAsync();
+        return await _db.Tags.Select(x => new TagDto(x.Id, x.CreateTime, x.Name)).ToListAsync();
     }
 
 }

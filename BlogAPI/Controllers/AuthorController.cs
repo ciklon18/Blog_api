@@ -1,4 +1,5 @@
-﻿using BlogAPI.Models.Response;
+﻿using BlogAPI.DTOs;
+using BlogAPI.Models.Response;
 using BlogAPI.services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,7 +17,7 @@ public class AuthorController : ControllerBase
     }
 
     [HttpGet("/api/author/list")]
-    public async Task<List<AuthorResponse>> GetAuthorList()
+    public async Task<List<AuthorDto>> GetAuthorList()
     {
         return await _authorService.GetAuthorList();
     }

@@ -4,5 +4,5 @@ namespace BlogAPI.services.Interfaces;
 
 public interface ITagService
 {
-    Task<List<TagResponse>> GetTags();
+    Task<List<TagDto>> GetTags();
 }

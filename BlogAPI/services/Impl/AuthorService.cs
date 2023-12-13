@@ -1,4 +1,5 @@
 ﻿using BlogAPI.Data;
+using BlogAPI.DTOs;
 using BlogAPI.Entities;
 using BlogAPI.Enums;
 using BlogAPI.Models.Response;
@@ -16,7 +17,7 @@ public class AuthorService : IAuthorService
         _db = db;
     }
 
-    public async Task<List<AuthorResponse>> GetAuthorList()
+    public async Task<List<AuthorDto>> GetAuthorList()
     {
         var authors = await GetAuthorsWithDetails();
         var authorIds = authors.Select(author => author.UserId).ToList();
@@ -84,10 +85,10 @@ public class AuthorService : IAuthorService
         return (likesHashMap, postsHashMap);
     }
 
-    private static AuthorResponse MapToAuthorResponse(UserCommunityRole author,
+    private static AuthorDto MapToAuthorResponse(UserCommunityRole author,
         IReadOnlyDictionary<Guid, int> likesHashMap, IReadOnlyDictionary<Guid, int> postsHashMap)
     {
-        return new AuthorResponse
+        return new AuthorDto
         {
             BirthDate = author.User.BirthDate.ToUniversalTime(),
             Created = author.User.CreatedAt.ToUniversalTime(),

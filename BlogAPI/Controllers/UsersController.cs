@@ -1,4 +1,5 @@
 ﻿
+using BlogAPI.DTOs;
 using BlogAPI.Entities;
 using BlogAPI.Models;
 using BlogAPI.Models.Request;
@@ -28,9 +29,9 @@ public class UsersController : ControllerBase
     
     
     [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] User user)
+    public async Task<IActionResult> Register([FromBody] RegisterRequest registerRequest)
     {
-        var newUser = await _authService.Register(user);
+        var newUser = await _authService.Register(registerRequest);
         return Ok(newUser);
     }
 
@@ -60,7 +61,7 @@ public class UsersController : ControllerBase
     
     
     [HttpGet("profile"), Authorize]
-    public async Task<UserProfileResponse> GetProfile()
+    public async Task<UserDto> GetProfile()
     {
         var userProfile = await _userService.GetUserProfileAsync();
         return userProfile;

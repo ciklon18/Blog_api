@@ -1,4 +1,5 @@
-﻿using BlogAPI.Enums;
+﻿using BlogAPI.DTOs;
+using BlogAPI.Enums;
 using BlogAPI.Models.Request;
 using BlogAPI.Models.Response;
 using BlogAPI.services.Interfaces;
@@ -20,7 +21,7 @@ public class PostController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<PostPagedListResponse> GetPost(
+    public async Task<PostPagedListDto> GetPost(
         [FromQuery(Name = "tags")] List<Guid> tagIds,
         [FromQuery] string? authorName,
         [FromQuery] int minReadingTime,
@@ -42,7 +43,7 @@ public class PostController : ControllerBase
     }
 	
     [HttpGet("{id}")]
-    public async Task<PostResponse> GetPostById([FromRoute] Guid id)
+    public async Task<PostFullDto> GetPostById([FromRoute] Guid id)
     {
         return await _postService.GetPostById(id);
     }

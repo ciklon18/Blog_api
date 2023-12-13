@@ -2,7 +2,7 @@
 using BlogAPI.Entities;
 using BlogAPI.Enums;
 using BlogAPI.Exceptions;
-using BlogAPI.Models.Response;
+using BlogAPI.Models;
 using BlogAPI.services.Interfaces;
 using BlogAPI.Utils;
 
@@ -17,45 +17,45 @@ public class AddressService : IAddressService
         _db = db;
     }
 
-    public List<SearchAddressResponse> Search(int parentObjectId, string? query)
+    public List<SearchAddressModel> Search(int parentObjectId, string? query)
     {
         var searchHierarchyList = GetHierarchyAddressList(parentObjectId);
 
-        var responseList = ConvertAddressListToAddressResponseList(searchHierarchyList);
-        responseList = GetAddressesResponseList(responseList);
-        responseList = GetAddressesAndHousesResponseList(responseList);
+        var responseList = ConvertAddressListToAddressModelList(searchHierarchyList);
+        responseList = GetAddressesModelList(responseList);
+        responseList = GetAddressesAndHousesModelList(responseList);
         responseList = query != null ? GetFilteredAddressedByQuery(responseList, query) : responseList;
 
         return responseList;
     }
 
-    public List<ChainAddressResponse> Chain(Guid objectGuid)
+    public List<SearchAddressModel> Chain(Guid objectGuid)
     {
         var objectId = GetElementByGuid(objectGuid);
         return objectId switch
         {
-            Address address => GetChainResponseList(address.ObjectId),
-            HousesAddress house => GetChainResponseList(house.ObjectId),
+            Address address => GetAddressModelList(address.ObjectId),
+            HousesAddress house => GetAddressModelList(house.ObjectId),
             _ => throw new AddressElementNotFound("Address element not found")
         };
     }
 
-    private List<ChainAddressResponse> GetChainResponseList(long houseIdObjectId)
+    private List<SearchAddressModel> GetAddressModelList(long houseIdObjectId)
     {
         var path = GetPath(houseIdObjectId);
         var pathItems = GetPathItems(path);
-        var chainResponseList = new List<ChainAddressResponse>(pathItems.Count);
+        var chainResponseList = new List<SearchAddressModel>(pathItems.Count);
 
         foreach (var objectId in pathItems)
         {
             var addressItem = GetAddressByObjectId(objectId);
             if (addressItem != null)
             {
-                chainResponseList.Add(ConvertAddressToChainResponse(addressItem));
+                chainResponseList.Add(ConvertAddressToAddressModel(addressItem));
                 continue;
             }
             var houseItem = GetHouseByObjectId(objectId);
-            if (houseItem != null) chainResponseList.Add(ConvertHouseToChainResponse(houseItem));
+            if (houseItem != null) chainResponseList.Add(ConvertHouseToAddressModel(houseItem));
         }
 
         return chainResponseList;
@@ -109,7 +109,7 @@ public class AddressService : IAddressService
     }
 
 
-    private static List<SearchAddressResponse> GetFilteredAddressedByQuery(List<SearchAddressResponse> addressedList,
+    private static List<SearchAddressModel> GetFilteredAddressedByQuery(IEnumerable<SearchAddressModel> addressedList,
         string query)
     {
         return addressedList
@@ -117,9 +117,9 @@ public class AddressService : IAddressService
             .ToList();
     }
 
-    private List<SearchAddressResponse> GetAddressesResponseList(List<SearchAddressResponse> responseList)
+    private List<SearchAddressModel> GetAddressesModelList(List<SearchAddressModel> responseList)
     {
-        var updatedResponseList = new List<SearchAddressResponse>(responseList.Count);
+        var updatedResponseList = new List<SearchAddressModel>(responseList.Count);
 
         foreach (var searchAddressResponse in responseList)
         {
@@ -135,9 +135,9 @@ public class AddressService : IAddressService
         return updatedResponseList;
     }
 
-    private List<SearchAddressResponse> GetAddressesAndHousesResponseList(List<SearchAddressResponse> responseList)
+    private List<SearchAddressModel> GetAddressesAndHousesModelList(List<SearchAddressModel> responseList)
     {
-        var updatedResponseList = new List<SearchAddressResponse>(responseList.Count);
+        var updatedResponseList = new List<SearchAddressModel>(responseList.Count);
 
         foreach (var searchAddressResponse in responseList)
         {
@@ -150,32 +150,32 @@ public class AddressService : IAddressService
         return updatedResponseList;
     }
 
-    private static SearchAddressResponse GetAddressListItem(SearchAddressResponse searchAddressResponse,
+    private static SearchAddressModel GetAddressListItem(SearchAddressModel searchAddressResponse,
         Address addressItem)
     {
         return searchAddressResponse with
         {
             ObjectGuid = addressItem.ObjectGuid,
             Text = $"{addressItem.TypeName} {addressItem.Name}",
-            ObjectLevel = AddressConverterUtil.GetObjectLevelWithInt(addressItem.Level).ToString(),
+            ObjectLevel = AddressConverterUtil.GetObjectLevelWithInt(addressItem.Level),
             ObjectLevelText = AddressConverterUtil.GetObjectLevelTextWithInt(addressItem.Level)
         };
     }
 
-    private static SearchAddressResponse GetHouseListItem(SearchAddressResponse searchAddressResponse,
+    private static SearchAddressModel GetHouseListItem(SearchAddressModel searchAddressResponse,
         HousesAddress addressItem)
     {
         return searchAddressResponse with
         {
             ObjectGuid = addressItem.ObjectGuid,
             Text = $"{addressItem.HouseNum}",
-            ObjectLevel = ObjectLevel.Building.ToString(),
+            ObjectLevel = ObjectLevel.Building,
             ObjectLevelText = AddressConverterUtil.GetObjectLevelTextWithObjectLevel(ObjectLevel.Building)
         };
     }
 
 
-    private List<HierarchyAddress> GetHierarchyAddressList(int parentObjectId)
+    private IEnumerable<HierarchyAddress> GetHierarchyAddressList(int parentObjectId)
     {
         return _db.HierarchyAddresses
             .Where(hierarchyAddress => hierarchyAddress.ParentObjectId == parentObjectId)
@@ -183,7 +183,7 @@ public class AddressService : IAddressService
     }
 
 
-    private List<long> GetPathItems(string path)
+    private static List<long> GetPathItems(string path)
     {
         return path.Split(".")
             .Where(item => item != "")
@@ -191,40 +191,40 @@ public class AddressService : IAddressService
             .ToList();
     }
 
-    private static List<SearchAddressResponse> ConvertAddressListToAddressResponseList(
+    private static List<SearchAddressModel> ConvertAddressListToAddressModelList(
         IEnumerable<HierarchyAddress> searchHierarchyResult)
     {
         return searchHierarchyResult
-            .Select(address => new SearchAddressResponse
+            .Select(address => new SearchAddressModel
             {
                 ObjectId = address.ObjectId,
-                ObjectLevel = "",
+                ObjectLevel = ObjectLevel.Empty,
                 ObjectLevelText = "",
                 Text = ""
             })
             .ToList();
     }
 
-    private static ChainAddressResponse ConvertAddressToChainResponse(Address address)
+    private static SearchAddressModel ConvertAddressToAddressModel(Address address)
     {
-        return new ChainAddressResponse
+        return new SearchAddressModel
         {
             ObjectId = address.ObjectId,
-            ObjectGuid = address.ObjectGuid.ToString(),
+            ObjectGuid = address.ObjectGuid,
             Text = $"{address.TypeName} {address.Name}",
-            ObjectLevel = AddressConverterUtil.GetObjectLevelWithInt(address.Level).ToString(),
+            ObjectLevel = AddressConverterUtil.GetObjectLevelWithInt(address.Level),
             ObjectLevelText = AddressConverterUtil.GetObjectLevelTextWithInt(address.Level)
         };
     }
 
-    private static ChainAddressResponse ConvertHouseToChainResponse(HousesAddress house)
+    private static SearchAddressModel ConvertHouseToAddressModel(HousesAddress house)
     {
-        return new ChainAddressResponse
+        return new SearchAddressModel
         {
             ObjectId = house.ObjectId,
-            ObjectGuid = house.ObjectGuid.ToString(),
+            ObjectGuid = house.ObjectGuid,
             Text = $"{house.HouseNum}",
-            ObjectLevel = ObjectLevel.Building.ToString(),
+            ObjectLevel = ObjectLevel.Building,
             ObjectLevelText = AddressConverterUtil.GetObjectLevelTextWithObjectLevel(ObjectLevel.Building)
         };
     }

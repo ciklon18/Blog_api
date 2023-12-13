@@ -1,4 +1,5 @@
 ﻿using BlogAPI.Data;
+using BlogAPI.DTOs;
 using BlogAPI.Entities;
 using BlogAPI.Exceptions;
 using BlogAPI.Models.Request;
@@ -22,7 +23,7 @@ public class CommentService : ICommentService
     }
 
 
-    public async Task<List<CommentResponse>> GetCommentTree(Guid commentId)
+    public async Task<List<CommentDto>> GetCommentTree(Guid commentId)
     {
         await CheckIsCommentExist(commentId);
         var comments = await _db.Comments
@@ -37,14 +38,14 @@ public class CommentService : ICommentService
         if (comment is not { DeleteDate: null }) throw new CommentNotFoundException("Comment not found");
     }
 
-    private static CommentResponse ConvertCommentToResponse(Comment comment)
+    private static CommentDto ConvertCommentToResponse(Comment comment)
     {
-        return new CommentResponse
+        return new CommentDto
         {
             Id = comment.Id,
             Author = comment.Author,
             AuthorId = comment.AuthorId,
-            Content = comment.DeleteDate != null ? string.Empty: comment.Content,
+            Content = comment.DeleteDate != null ? string.Empty : comment.Content,
             CreateTime = comment.CreateTime,
             DeleteDate = comment.DeleteDate,
             ModifiedDate = comment.ModifiedDate,
@@ -60,8 +61,8 @@ public class CommentService : ICommentService
             await CheckIsThereParentComment(request.ParentId);
             await UpdateSubCommentsCount(request.ParentId);
         }
-        var userId = await _jwtService.GetUserGuidFromToken();
-        var author = await GetUserByGuid(userId);
+        var userId = await _jwtService.GetUserGuidFromTokenAsync();
+        var author = await GetUserDtoByGuid(userId);
         var comment = ConvertRequestToComment(request, author.FullName, author.Id, postId);
         _db.Comments.Add(comment);
         await _db.SaveChangesAsync();
@@ -72,7 +73,7 @@ public class CommentService : ICommentService
     public async Task<IActionResult> EditComment(Guid commentId, UpdateCommentRequest request)
     {
         CheckIsCommentEmpty(request.Content);
-        var userId = await _jwtService.GetUserGuidFromToken();
+        var userId = await _jwtService.GetUserGuidFromTokenAsync();
         var comment = await _db.Comments.FirstOrDefaultAsync(x => x.Id == commentId);
         if (comment is not { DeleteDate: null }) throw new CommentNotFoundException("Comment not found");
         if (comment.AuthorId != userId)
@@ -91,7 +92,7 @@ public class CommentService : ICommentService
 
     public async Task<IActionResult> DeleteComment(Guid commentId)
     {
-        var userId = await _jwtService.GetUserGuidFromToken();
+        var userId = await _jwtService.GetUserGuidFromTokenAsync();
         var comment = await _db.Comments.FirstOrDefaultAsync(x => x.Id == commentId);
         if (comment == null) throw new CommentNotFoundException("Comment not found");
         if (comment.AuthorId != userId)
@@ -120,7 +121,7 @@ public class CommentService : ICommentService
     }
 
 
-    private async Task<User> GetUserByGuid(Guid userId)
+    private async Task<User> GetUserDtoByGuid(Guid userId)
     {
         var author = await _db.Users.FirstOrDefaultAsync(x => x.Id == userId);
         if (author == null) throw new UserNotFoundException("User not found");

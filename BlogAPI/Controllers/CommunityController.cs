@@ -1,4 +1,5 @@
-﻿using BlogAPI.Entities;
+﻿using BlogAPI.DTOs;
+using BlogAPI.Entities;
 using BlogAPI.Enums;
 using BlogAPI.Models.Request;
 using BlogAPI.Models.Response;
@@ -19,25 +20,25 @@ public class CommunityController : ControllerBase
     }
 
     [HttpGet()]
-    public async Task<List<CommunityResponse>> GetCommunityList()
+    public async Task<List<CommunityDto>> GetCommunityList()
     {
         return await _communityService.GetCommunityList();
     }
 
     [HttpGet("my"), Authorize]
-    public async Task<List<CommunityUserResponse>> GetMyCommunityList()
+    public async Task<List<CommunityUserDto>> GetMyCommunityList()
     {
         return await _communityService.GetMyCommunityList();
     }
 
     [HttpGet("{id}")]
-    public async Task<CommunityFullResponse> GetCommunityInfo([FromRoute] Guid id)
+    public async Task<CommunityFullDto> GetCommunityInfo([FromRoute] Guid id)
     {
         return await _communityService.GetCommunityInfo(id);
     }
 
     [HttpGet("{id}/post"), Authorize]
-    public async Task<PostPagedListResponse> GetCommunityPosts( 
+    public async Task<PostPagedListDto> GetCommunityPosts( 
         [FromRoute] Guid id,
         [FromQuery(Name = "tags")] List<Guid> tagIds,
         [FromQuery] PostSorting sort,

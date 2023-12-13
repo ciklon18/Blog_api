@@ -1,4 +1,5 @@
-﻿using BlogAPI.Models.Request;
+﻿using BlogAPI.DTOs;
+using BlogAPI.Models.Request;
 using BlogAPI.Models.Response;
 using BlogAPI.services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -18,7 +19,7 @@ public class CommentController : ControllerBase
     }
  
     [HttpGet("{id}/tree")]
-    public async Task<List<CommentResponse>> GetCommentTree([FromRoute] Guid id)
+    public async Task<List<CommentDto>> GetCommentTree([FromRoute] Guid id)
     {
         return await _commentService.GetCommentTree(id);
     }

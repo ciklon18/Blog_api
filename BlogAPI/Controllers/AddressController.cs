@@ -1,4 +1,5 @@
-﻿using BlogAPI.Models.Response;
+﻿using BlogAPI.Models;
+using BlogAPI.Models.Response;
 using BlogAPI.services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -23,7 +24,7 @@ public class AddressController : ControllerBase
     }
     
     [HttpGet("chain")]
-    public List<ChainAddressResponse> Chain([FromQuery] Guid objectGuid)
+    public List<SearchAddressModel> Chain([FromQuery] Guid objectGuid)
     {
         var chainResponse = _addressService.Chain(objectGuid);
         return chainResponse;
