@@ -23,7 +23,6 @@ public class TokenCleanupService : ITokenCleanupService, IHostedService, IAsyncD
         if (!expiredTokens.Any()) return;
         _db.RefreshTokens.RemoveRange(expiredTokens);
         _db.SaveChanges();
-
     }
 
     public Task StartAsync(CancellationToken cancellationToken)
